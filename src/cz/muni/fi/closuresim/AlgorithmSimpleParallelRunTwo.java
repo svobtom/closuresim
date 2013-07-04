@@ -20,7 +20,8 @@ public class AlgorithmSimpleParallelRunTwo implements Runnable {
     /**
      * Reference to ResultCollector.
      */
-    public static ResultCollector resultCollector;
+    //public static ResultCollector resultCollector;
+    protected static DisconnectionCollector disconnectionList;
     private static Set<Road> twoRoadCheck = Collections.synchronizedSet(new HashSet());
     /**
      * Set of roads, which are processing by some thread.
@@ -73,15 +74,17 @@ public class AlgorithmSimpleParallelRunTwo implements Runnable {
                         // TODO ? - nebylo by rychlejsi, prvni sit otestovat na dve komponenty a nepocitat vsechny? boolean connected = net.isInOneComponent(); if (!connected) {
                         int numOfComp = net.getNumOfComponents();
                         if (numOfComp > 1) {
-                            double variance = net.getValueOfBadness(numOfComp);
-                            System.out.println(Thread.currentThread().getName() + ": Disconnected after close roads " + r.getId() + " and " + r2.getId() + " (" + variance + "). ");
+                            
+                            System.out.println(Thread.currentThread().getName() + ": Disconnected after close roads " + r.getId() + " and " + r2.getId() + ". ");
                             Set<Road> toStore = new HashSet<Road>();
                             toStore.add(r);
                             toStore.add(r2);
                             AlgorithmSimpleParallel.setRoadsToDisconnect.add(toStore);
                             synchronized (LOCKER) {
-                                resultCollector.addResultTwo(r.getId(), r2.getId(), variance);
-                                count++;
+                                //resultCollector.addResultTwo(r.getId(), r2.getId(), 0.0);
+                                //count++;
+                                Disconnection dis = new Disconnection(r, r2);
+                                disconnectionList.addDisconnection(dis);
                             }
                         }
                         r2.open();

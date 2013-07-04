@@ -39,8 +39,8 @@ public class Road {
     
     @Override
     public int hashCode() {
-        int hash = 7;
-        hash = 47 * hash + this.id;
+        int hash = 5;
+        hash = 13 * hash + this.id;
         return hash;
     }
 

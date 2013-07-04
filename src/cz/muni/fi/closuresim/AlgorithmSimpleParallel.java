@@ -14,16 +14,21 @@ public class AlgorithmSimpleParallel implements Algorithm {
 
     private static final int NUMBER_OF_THREADS = ExperimentSetup.USE_CPUs;
     private Net net;
-    private ResultCollector resultCollector;
+    //private ResultCollector resultCollector;
+    protected DisconnectionCollector disconnectionList;
     protected static Set<Road> oneRoadToDisconnect = Collections.synchronizedSet(new HashSet());
     protected static Set<Set<Road>> setRoadsToDisconnect = Collections.synchronizedSet(new HashSet());
 
-    public AlgorithmSimpleParallel(Net net, ResultCollector rc) {
+    public AlgorithmSimpleParallel(Net net, ResultCollector rc, DisconnectionCollector dl) {
         this.net = net;
-        this.resultCollector = rc;
-        AlgorithmSimpleParallelRunOne.resultCollector = resultCollector;
-        AlgorithmSimpleParallelRunTwo.resultCollector = resultCollector;
-        AlgorithmSimpleParallelRunThree.resultCollector = resultCollector;
+        //this.resultCollector = rc;
+        this.disconnectionList = dl;
+        //AlgorithmSimpleParallelRunOne.resultCollector = resultCollector;
+        //AlgorithmSimpleParallelRunTwo.resultCollector = resultCollector;
+        //AlgorithmSimpleParallelRunThree.resultCollector = resultCollector;
+        
+        AlgorithmSimpleParallelRunOne.disconnectionList = disconnectionList;
+        AlgorithmSimpleParallelRunTwo.disconnectionList = disconnectionList;
     }
 
     @Override

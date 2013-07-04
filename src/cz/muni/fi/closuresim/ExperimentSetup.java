@@ -8,6 +8,7 @@ public class ExperimentSetup {
 
     private static final int AVAILABLE_CPUs = Runtime.getRuntime().availableProcessors();
     protected static int USE_CPUs;
+    private static int MAX_CLOSED_ROADS;
 
     public static void main(String[] args) {
         final long startExecutionTime = System.currentTimeMillis();
@@ -24,11 +25,17 @@ public class ExperimentSetup {
             FILE_ROADS = args[1];
         }
         if (args.length > 2 && args[2].length() > 0) {
-            FILE_ROADS = args[1];
+            //FILE_ROADS = args[1]; // TODO - proc sem to sem dal?
             USE_CPUs = Integer.parseInt(args[2]);
         } else {
             USE_CPUs = Math.min(AVAILABLE_CPUs, 20);
         }
+        if (args.length > 3 && args[3].length() > 0) {
+            MAX_CLOSED_ROADS = Integer.parseInt(args[3]);
+        } else {
+            MAX_CLOSED_ROADS = 1;
+        }
+        
         System.out.println();
         System.out.println("========================== ClosureSim ===========================");
         System.out.println("Program use " + USE_CPUs + "/" + AVAILABLE_CPUs + " CPUs installed in this system. ");
@@ -61,24 +68,35 @@ public class ExperimentSetup {
 
         // create result collector
         ResultCollector resultCollector = new ResultCollector();
-
+        DisconnectionCollector disconnectionCollector = new DisconnectionCollector();
+        
         // do the algorithm        
-        Algorithm alg = new AlgorithmSimpleParallel(net, resultCollector);
+        Algorithm alg = new AlgorithmSimpleParallel(net, resultCollector, disconnectionCollector);
         System.out.println();
-        System.out.println("Start of the algorithm: " + alg.getClass().getSimpleName());
+        System.out.println("Finding disconnection algorithm: " + alg.getClass().getSimpleName());
         System.out.println("------------------------------------------------------------------");
         alg.start();
         System.out.println("------------------------------------------------------------------");
-
-        // display and store results
-        resultCollector.displayStatistics();
-        System.out.println("Total number of disconnection " + resultCollector.getNumberOfDisconnection());
-        resultCollector.storeResultsToFile();
+        final long endAlgTime = System.currentTimeMillis();
+        
+        Evaluation evaluation = new Evaluation(net, disconnectionCollector);
+        System.out.println();
+        System.out.println("Evaluaton started (" + evaluation.getClass().getSimpleName() + ")");
+        System.out.println("------------------------------------------------------------------");
+        evaluation.start();
+        System.out.println("------------------------------------------------------------------");
+        
+        // display and store disconnections
+        disconnectionCollector.displayStatistics();
+        disconnectionCollector.storeResultsToFile();
         System.out.println("Result was stored to files results-n.csv, where n is number of closed roads. ");
+        System.out.println("----------");
         
         // display time of execution
         final long endExecutionTime = System.currentTimeMillis();
-        System.out.println("Execution time is " + (endExecutionTime - startExecutionTime) / 1000.0 + " seconds. ");
+        System.out.println("Finding time is " + (endAlgTime - startExecutionTime) / 1000.0 + " seconds. ");
+        System.out.println("Evaluation time is " + (endExecutionTime - endAlgTime) / 1000.0 + " seconds. ");
+        System.out.println("Total time is " + (endExecutionTime - startExecutionTime) / 1000.0 + " seconds. ");
         System.out.println("==================================================================");
         
     } // end method main
