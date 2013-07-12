@@ -3,6 +3,9 @@ package cz.muni.fi.closuresim;
 import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.math.BigDecimal;
+import java.math.MathContext;
+import java.text.DecimalFormat;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.HashSet;
@@ -19,7 +22,7 @@ public class DisconnectionCollector {
     private Set<Disconnection> disconnections;
 
     public DisconnectionCollector() {
-        this.disconnections = new HashSet<Disconnection>();
+        this.disconnections = Collections.synchronizedSet(new HashSet<Disconnection>());
     }
 
     /**
@@ -34,6 +37,16 @@ public class DisconnectionCollector {
 
     public Set<Disconnection> getDisconnections() {
         return Collections.unmodifiableSet(disconnections);
+    }
+
+    /**
+     * Check if the disconnection is found and write down yet.
+     *
+     * @param dis
+     * @return true if it already contain gicen disconnection
+     */
+    public boolean containDisconnection(Disconnection dis) {
+        return disconnections.contains(dis);
     }
 
     /**
@@ -123,12 +136,12 @@ public class DisconnectionCollector {
                 }
                 outAll.write("VALUATION;");
 
-                out[disconnection.getNumClosedRoads() - 1].write(Integer.toString((Integer) disconnection.getValuation().get(0)) + ";");
-                out[disconnection.getNumClosedRoads() - 1].write(Double.toString((Double) disconnection.getValuation().get(1))); // todo
+                out[disconnection.getNumClosedRoads() - 1].write(Integer.toString((Integer) disconnection.getEvaluation(0)) + ";");
+                out[disconnection.getNumClosedRoads() - 1].write(Double.toString((Double) disconnection.getEvaluation(1))); // todo
                 out[disconnection.getNumClosedRoads() - 1].newLine();
-                
-                outAll.write(Integer.toString((Integer) disconnection.getValuation().get(0)) + ";"); // todo
-                outAll.write(Double.toString((Double) disconnection.getValuation().get(1)));
+
+                outAll.write(Integer.toString((Integer) disconnection.getEvaluation(0)) + ";"); // todo
+                outAll.write(Double.toString((Double) disconnection.getEvaluation(1)));
                 outAll.newLine();
             }
 

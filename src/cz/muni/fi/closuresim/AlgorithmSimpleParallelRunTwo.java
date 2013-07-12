@@ -17,16 +17,13 @@ public class AlgorithmSimpleParallelRunTwo implements Runnable {
      * discovering network.
      */
     private Net net;
-    /**
-     * Reference to ResultCollector.
-     */
-    //public static ResultCollector resultCollector;
-    protected static DisconnectionCollector disconnectionList;
+    protected static DisconnectionCollector disconnectionCollector;
     private static Set<Road> twoRoadCheck = Collections.synchronizedSet(new HashSet());
     /**
      * Set of roads, which are processing by some thread.
      */
     private static Set<Road> workedRoads = Collections.synchronizedSet(new HashSet());
+    private static Set<Set<Road>> twoWorkedRoads = Collections.synchronizedSet(new HashSet());
     public static int count = 0;
     private static final Object LOCKER = new Object();
 
@@ -36,25 +33,21 @@ public class AlgorithmSimpleParallelRunTwo implements Runnable {
 
     @Override
     public void run() {
-
         testCloseTwoRoads();
     }
 
     private void testCloseTwoRoads() {
+
         // testing closing two roads
-        //Set<Road> twoRoadCheck = new HashSet();
         for (Iterator<Road> it = net.getRoads().iterator(); it.hasNext();) {
             Road r = it.next();
 
-            synchronized (LOCKER) {
-                if (!workedRoads.contains(r)) {
-                    // zde mesmi pristoupit dalsi vlakno
-                    workedRoads.add(r);
-                } else {
-                    continue;
-                }
+            // if this roads isn't been processing by someone else
+            if (!workedRoads.add(r)) {
+                continue;
             }
 
+            // if the road closing alone don't lead to disconnection
             if (!AlgorithmSimpleParallel.oneRoadToDisconnect.contains(r)) {
 
                 r.close();
@@ -62,38 +55,32 @@ public class AlgorithmSimpleParallelRunTwo implements Runnable {
                 for (Iterator<Road> it2 = net.getRoads().iterator(); it2.hasNext();) {
                     Road r2 = it2.next();
 
-                    /*synchronized (LOCKER) {
-                     if (workedRoads.contains(r2)) {
-                     continue;
-                     }
-                     }*/
-
                     if (!AlgorithmSimpleParallel.oneRoadToDisconnect.contains(r2) && !r.equals(r2) && !twoRoadCheck.contains(r2)) { // && !workedRoads.contains(r2)
 
                         r2.close();
-                        // TODO ? - nebylo by rychlejsi, prvni sit otestovat na dve komponenty a nepocitat vsechny? boolean connected = net.isInOneComponent(); if (!connected) {
-                        int numOfComp = net.getNumOfComponents();
-                        if (numOfComp > 1) {
-                            
-                            System.out.println(Thread.currentThread().getName() + ": Disconnected after close roads " + r.getId() + " and " + r2.getId() + ". ");
+
+                        if (!net.isInOneComponent()) {
+
+                            //System.out.println(Thread.currentThread().getName() + ": Disconnected after close roads " + r.getName() + " and " + r2.getName() + ". ");
+
                             Set<Road> toStore = new HashSet<Road>();
                             toStore.add(r);
                             toStore.add(r2);
-                            AlgorithmSimpleParallel.setRoadsToDisconnect.add(toStore);
-                            synchronized (LOCKER) {
-                                //resultCollector.addResultTwo(r.getId(), r2.getId(), 0.0);
-                                //count++;
-                                Disconnection dis = new Disconnection(r, r2);
-                                disconnectionList.addDisconnection(dis);
-                            }
+                            AlgorithmSimpleParallel.setRoadsToDisconnect.add(toStore); // todo - zrusit, je nahrazeno disconnectionCollectorem
+
+                            Disconnection dis = new Disconnection(r, r2);
+                            disconnectionCollector.addDisconnection(dis);
+
                         }
+
                         r2.open();
 
                     }
                 }
+
                 r.open();
                 twoRoadCheck.add(r);
-                //System.out.print(".");
+
             }
 
         }

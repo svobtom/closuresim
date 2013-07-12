@@ -1,5 +1,8 @@
 package cz.muni.fi.closuresim;
 
+//import cz.muni.fi.closuresim.tools.NetReducer;
+import java.util.logging.Level;
+
 /**
  *
  * @author Tom
@@ -9,10 +12,12 @@ public class ExperimentSetup {
     private static final int AVAILABLE_CPUs = Runtime.getRuntime().availableProcessors();
     protected static int USE_CPUs;
     private static int MAX_CLOSED_ROADS;
+    protected static final MyLogger LOGGER = new MyLogger("experiment.log");
 
     public static void main(String[] args) {
         final long startExecutionTime = System.currentTimeMillis();
-
+        LOGGER.log(Level.INFO, "Start of experiment");
+        
         // implicite files (used when no arguments found)
         String FILE_NODES = "obce_plus.csv";
         String FILE_ROADS = "silnice_plus.csv";
@@ -53,6 +58,9 @@ public class ExperimentSetup {
         net.setName("Silniční síť");
         System.out.println("From file \"" + FILE_NODES + "\" was loaded " + loader.getNumOfLoadedNodes() + " nodes.");
         System.out.println("From file \"" + FILE_ROADS + "\" was loaded " + loader.getNumOfLoadedRoads()+ " roads.");
+        
+        //NetReducer nr = new NetReducer(net);
+        //nr.reduce(8);
 
         // display network
         //System.out.println(net.toString());
@@ -71,11 +79,11 @@ public class ExperimentSetup {
         DisconnectionCollector disconnectionCollector = new DisconnectionCollector();
         
         // do the algorithm        
-        Algorithm alg = new AlgorithmSimpleParallel(net, resultCollector, disconnectionCollector);
+        Algorithm alg = new AlgorithmSimpleParallel(net, disconnectionCollector);
         System.out.println();
         System.out.println("Finding disconnection algorithm: " + alg.getClass().getSimpleName());
         System.out.println("------------------------------------------------------------------");
-        alg.start();
+        alg.start(MAX_CLOSED_ROADS);
         System.out.println("------------------------------------------------------------------");
         final long endAlgTime = System.currentTimeMillis();
         
@@ -85,12 +93,13 @@ public class ExperimentSetup {
         System.out.println("------------------------------------------------------------------");
         evaluation.start();
         System.out.println("------------------------------------------------------------------");
+        System.out.println();
         
         // display and store disconnections
         disconnectionCollector.displayStatistics();
         disconnectionCollector.storeResultsToFile();
         System.out.println("Result was stored to files results-n.csv, where n is number of closed roads. ");
-        System.out.println("----------");
+        System.out.println();
         
         // display time of execution
         final long endExecutionTime = System.currentTimeMillis();
@@ -98,6 +107,7 @@ public class ExperimentSetup {
         System.out.println("Evaluation time is " + (endExecutionTime - endAlgTime) / 1000.0 + " seconds. ");
         System.out.println("Total time is " + (endExecutionTime - startExecutionTime) / 1000.0 + " seconds. ");
         System.out.println("==================================================================");
-        
+        LOGGER.log(Level.INFO, "End of experiment");
+        LOGGER.closeLogger();
     } // end method main
 } // end class

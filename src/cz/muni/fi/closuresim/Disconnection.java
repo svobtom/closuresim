@@ -99,8 +99,18 @@ public class Disconnection {
         return true;
     }
 
+    /*
     public Map<Integer, Number> getValuation() {
         return valuation;
+    }
+    */
+    
+    public void setEvaluation(int type, Number num) {
+        this.valuation.put(type, num);
+    }
+    
+    public Number getEvaluation(int type) {
+        return this.valuation.get(type);
     }
     
 }

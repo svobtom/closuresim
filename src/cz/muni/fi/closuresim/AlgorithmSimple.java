@@ -26,7 +26,7 @@ public class AlgorithmSimple implements Algorithm {
     }
 
     @Override
-    public void start() {
+    public void start(int maxNumOfClosedRoads) {
         testCloseOneRoad();
         System.out.println();
 

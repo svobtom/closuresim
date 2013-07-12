@@ -15,7 +15,10 @@ import java.util.logging.Logger;
  * @author Tom
  */
 public class NetLoader {
-    /** New loaded net */
+
+    /**
+     * New loaded net
+     */
     private Net net;
 
     public NetLoader() {
@@ -86,9 +89,11 @@ public class NetLoader {
 
             }
         } catch (FileNotFoundException ex) {
-            Logger.getLogger(NetLoader.class.getName()).log(Level.SEVERE, null, ex);
+            ExperimentSetup.LOGGER.log(Level.SEVERE, null, ex);
+            System.err.println("File with nodes not found.");
+            System.exit(1);
         } catch (IOException ex) {
-            Logger.getLogger(NetLoader.class.getName()).log(Level.SEVERE, null, ex);
+            ExperimentSetup.LOGGER.log(Level.SEVERE, null, ex);
         }
     }
 
@@ -112,7 +117,7 @@ public class NetLoader {
                 String name = elements[3];
                 String slength = elements[4];
                 String stime = elements[5];
-                
+
                 int id = Integer.parseInt(sid);
                 int start = Integer.parseInt(sstart);
                 int end = Integer.parseInt(send);
@@ -137,7 +142,9 @@ public class NetLoader {
 
             }
         } catch (FileNotFoundException ex) {
-            Logger.getLogger(NetLoader.class.getName()).log(Level.SEVERE, null, ex);
+            ExperimentSetup.LOGGER.log(Level.SEVERE, null, ex);
+            System.err.println("File with roads not found.");
+            System.exit(1);
         } catch (IOException ex) {
             Logger.getLogger(NetLoader.class.getName()).log(Level.SEVERE, null, ex);
         }
@@ -155,7 +162,7 @@ public class NetLoader {
      * Convert the file in CDV format to two files in csv format and load them.
      *
      * @param oneFile path to the file in CDV format
-     */ 
+     */
     private void convertFromFormatCDV(String oneFile) {
         // create structure where will be load the data from source file
         List<Node> nodes = new LinkedList();
@@ -208,11 +215,13 @@ public class NetLoader {
 
                 }
             }
+        } catch (FileNotFoundException ex) {
+            ExperimentSetup.LOGGER.log(Level.SEVERE, null, ex);
+            System.err.println("File with nodes and rodes not found.");
+            System.exit(1);
         } catch (IOException ex) {
-            Logger.getLogger(NetLoader.class.getName()).log(Level.SEVERE, null, ex);
+            ExperimentSetup.LOGGER.log(Level.SEVERE, null, ex);
         }
-
-        //System.out.println(nodes.toString());
     }
 
     private void readRoads(String fileName, List<Node> nodes, List<Road> roads) {
@@ -303,14 +312,18 @@ public class NetLoader {
                     //String[] roads_elements = elements[1].split(" ");
                 }
             }
+        } catch (FileNotFoundException ex) {
+            ExperimentSetup.LOGGER.log(Level.SEVERE, null, ex);
+            System.err.println("File with nodes and rodes not found.");
+            System.exit(1);
         } catch (IOException ex) {
-            Logger.getLogger(NetLoader.class.getName()).log(Level.SEVERE, null, ex);
+            ExperimentSetup.LOGGER.log(Level.SEVERE, null, ex);
         }
 
         // System.out.println(roads.toString());
     }
 
-    private void creatNodesFile(String fileName, List<Node> nodes) {
+    public void creatNodesFile(String fileName, List<Node> nodes) {
         try {
             FileWriter writer = new FileWriter(fileName);
 
@@ -343,7 +356,7 @@ public class NetLoader {
 
     }
 
-    private void creatRoadsFile(String fileName, List<Road> roads) {
+    public void creatRoadsFile(String fileName, List<Road> roads) {
         try {
             FileWriter writer = new FileWriter(fileName);
 

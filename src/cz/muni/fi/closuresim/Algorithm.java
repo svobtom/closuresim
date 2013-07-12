@@ -1,12 +1,14 @@
 package cz.muni.fi.closuresim;
 
 /**
- * General algorithm
+ * Interface of algorithm which find discconection.
+ *
  * @author Tom
  */
 public interface Algorithm {
+
     /**
-     * Start the algorithm
+     * Start the algorithm where maximum number of closed roads is determined.
      */
-    public void start();
+    public void start(int maxClosedRoads);
 }

@@ -14,90 +14,65 @@ public class AlgorithmSimpleParallel implements Algorithm {
 
     private static final int NUMBER_OF_THREADS = ExperimentSetup.USE_CPUs;
     private Net net;
-    //private ResultCollector resultCollector;
     protected DisconnectionCollector disconnectionList;
     protected static Set<Road> oneRoadToDisconnect = Collections.synchronizedSet(new HashSet());
     protected static Set<Set<Road>> setRoadsToDisconnect = Collections.synchronizedSet(new HashSet());
 
-    public AlgorithmSimpleParallel(Net net, ResultCollector rc, DisconnectionCollector dl) {
+    public AlgorithmSimpleParallel(Net net, DisconnectionCollector dl) {
         this.net = net;
-        //this.resultCollector = rc;
         this.disconnectionList = dl;
-        //AlgorithmSimpleParallelRunOne.resultCollector = resultCollector;
-        //AlgorithmSimpleParallelRunTwo.resultCollector = resultCollector;
-        //AlgorithmSimpleParallelRunThree.resultCollector = resultCollector;
         
-        AlgorithmSimpleParallelRunOne.disconnectionList = disconnectionList;
-        AlgorithmSimpleParallelRunTwo.disconnectionList = disconnectionList;
+        AlgorithmSimpleParallelRunOne.disconnectionCollector = disconnectionList;
+        AlgorithmSimpleParallelRunTwo.disconnectionCollector = disconnectionList;
+        AlgorithmSimpleParallelRunThree.disconnectionCollector = disconnectionList;
     }
 
     @Override
-    public void start() {
+    public void start(final int maxNumClosedRoads) {
 
+        // create array of runnable and thread
         Runnable[] runnables = new Runnable[NUMBER_OF_THREADS];
         Thread[] threads = new Thread[NUMBER_OF_THREADS];
 
-        // check one road
-        for (int i = 0; i < NUMBER_OF_THREADS; i++) {
-            runnables[i] = new AlgorithmSimpleParallelRunOne(net);
-            threads[i] = new Thread(runnables[i]);
-            threads[i].setName(Integer.toString(i));
-        }
+        // doing algorithm for one road, two roads, ...
+        for (int numOfRoads = 1; numOfRoads <= maxNumClosedRoads; numOfRoads++) {
+            System.out.print("Discovering " + numOfRoads + " road(s) disconnections ... ");
+            
+            for (int i = 0; i < NUMBER_OF_THREADS; i++) {
 
-        for (int i = 0; i < NUMBER_OF_THREADS; i++) {
-            threads[i].start();
-        }
+                // inicialize runnable by specific algorithm modification
+                switch (numOfRoads) {
+                    case 0:
+                        break;
+                    case 1:
+                        runnables[i] = new AlgorithmSimpleParallelRunOne(net);
+                        break;
+                    case 2:
+                        runnables[i] = new AlgorithmSimpleParallelRunTwo(net);
+                        break;
+                    case 3:
+                        runnables[i] = new AlgorithmSimpleParallelRunThree(net);
+                        break;
+                }
 
-        for (int i = 0; i < NUMBER_OF_THREADS; i++) {
-            try {
-                threads[i].join();
-            } catch (InterruptedException ex) {
-                Logger.getLogger(AlgorithmSimpleParallel.class.getName()).log(Level.SEVERE, null, ex);
+                // set thread to its runnable and name it
+                threads[i] = new Thread(runnables[i]);
+                threads[i].setName(Integer.toString(i));
             }
-        }
 
-        // check two roads
-        for (int i = 0; i < NUMBER_OF_THREADS; i++) {
-            runnables[i] = new AlgorithmSimpleParallelRunTwo(net);
-            threads[i] = new Thread(runnables[i]);
-            threads[i].setName(Integer.toString(i));
-        }
-
-        for (int i = 0; i < NUMBER_OF_THREADS; i++) {
-            threads[i].start();
-        }
-
-        for (int i = 0; i < NUMBER_OF_THREADS; i++) {
-            try {
-                threads[i].join();
-            } catch (InterruptedException ex) {
-                Logger.getLogger(AlgorithmSimpleParallel.class.getName()).log(Level.SEVERE, null, ex);
+            for (int i = 0; i < NUMBER_OF_THREADS; i++) {
+                threads[i].start();
             }
-        }
 
-        //System.out.println("Pocet dvoucest k rozpojeni: " + AlgorithmSimpleParallelRunTwo.count); // vypis kolik vratil algoritmus RunTwo vysledku
-
-        /*System.out.println(setRoadsToDisconnect.toString());
-        
-        * /*
-        // check three roads
-        for (int i = 0; i < NUMBER_OF_THREADS; i++) {
-            runnables[i] = new AlgorithmSimpleParallelRunThree(net);
-            threads[i] = new Thread(runnables[i]);
-            threads[i].setName(Integer.toString(i));
-        }
-
-        for (int i = 0; i < NUMBER_OF_THREADS; i++) {
-            threads[i].start();
-        }
-
-        for (int i = 0; i < NUMBER_OF_THREADS; i++) {
-            try {
-                threads[i].join();
-            } catch (InterruptedException ex) {
-                Logger.getLogger(AlgorithmSimpleParallel.class.getName()).log(Level.SEVERE, null, ex);
+            for (int i = 0; i < NUMBER_OF_THREADS; i++) {
+                try {
+                    threads[i].join();
+                } catch (InterruptedException ex) {
+                    Logger.getLogger(AlgorithmSimpleParallel.class.getName()).log(Level.SEVERE, null, ex);
+                }
             }
+            
+            System.out.println("Done");
         }
-        */
     }
 }

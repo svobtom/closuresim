@@ -12,26 +12,21 @@ import java.util.Set;
 public class AlgorithmSimpleParallelRunThree implements Runnable {
 
     private Net net;
-    protected static ResultCollector resultCollector;
-    private static final Object LOCKER = new Object();
-    private static final Object LOCKER2 = new Object();
+    protected static DisconnectionCollector disconnectionCollector;
     private static Set<Set<Road>> doneThreeRoads = Collections.synchronizedSet(new HashSet<Set<Road>>());
     private static Set<Road> workedFirstRoad = Collections.synchronizedSet(new HashSet<Road>());
 
     public AlgorithmSimpleParallelRunThree(Net net) {
         this.net = net.clone();
-
-
     }
 
     @Override
     public void run() {
-        testCloseThreeRoads();
+        //testCloseThreeRoads();
+        testCloseThreeRoads2();
     }
 
     private void testCloseThreeRoads() {
-
-
 
         for (Iterator<Road> it1 = this.net.getRoads().iterator(); it1.hasNext();) {
             Road r1 = it1.next();
@@ -39,11 +34,10 @@ public class AlgorithmSimpleParallelRunThree implements Runnable {
                 continue;
             }
 
-            synchronized (LOCKER) {
-                if (!workedFirstRoad.add(r1)) {
-                    continue;
-                }
+            if (!workedFirstRoad.add(r1)) {
+                continue;
             }
+
             r1.close();
 
             for (Iterator<Road> it2 = this.net.getRoads().iterator(); it2.hasNext();) {
@@ -72,9 +66,10 @@ public class AlgorithmSimpleParallelRunThree implements Runnable {
                                 if (numOfComp > 1) {
                                     double variance = net.getValueOfBadness(numOfComp);
                                     System.out.println(Thread.currentThread().getName() + ": Disconnected after close roads " + r1.getId() + ", " + r2.getId() + " and " + r3.getId() + " (" + variance + "). ");
-                                    synchronized (LOCKER2) {
-                                        resultCollector.addResultThree(r1.getId(), r2.getId(), r3.getId(), variance);
-                                    }
+
+                                    Disconnection dis = new Disconnection(r1, r2, r3);
+                                    disconnectionCollector.addDisconnection(dis);
+
                                 }
                                 r3.open();
 
@@ -93,5 +88,50 @@ public class AlgorithmSimpleParallelRunThree implements Runnable {
 
 
 
+    }
+
+    private void testCloseThreeRoads2() {
+        Set<RoadsSelection> setRs = Collections.synchronizedSet(new HashSet<RoadsSelection>());
+
+        for (Iterator<Road> it1 = this.net.getRoads().iterator(); it1.hasNext();) {
+            Road r1 = it1.next();
+
+            for (Iterator<Road> it2 = this.net.getRoads().iterator(); it2.hasNext();) {
+                Road r2 = it2.next();
+
+                if (r2.equals(r1)) {
+                    continue;
+                }
+
+                for (Iterator<Road> it3 = this.net.getRoads().iterator(); it3.hasNext();) {
+                    Road r3 = it3.next();
+
+                    if (r3.equals(r1) || r3.equals(r2)) {
+                        continue;
+                    }
+
+                    RoadsSelection rs = new RoadsSelection(3);
+                    rs.addRoads(r1, r2, r3);
+                    if (setRs.add(rs)) {
+                        r1.close();
+                        r2.close();
+                        r3.close();
+                        
+                        if (!net.isInOneComponent()) {
+                            //System.out.println(Thread.currentThread().getName() + ": Disconnected after close roads " + r1.getName() + ", " + r2.getName() + " and " + r3.getName() + ".");
+                            Disconnection dis = new Disconnection(r1, r2, r3);
+                            disconnectionCollector.addDisconnection(dis);
+                        }
+                        
+                        r1.open();
+                        r2.open();
+                        r3.open();
+                    }
+
+                }
+
+            }
+
+        }
     }
 }

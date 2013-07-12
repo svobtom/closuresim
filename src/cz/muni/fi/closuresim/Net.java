@@ -142,30 +142,31 @@ public class Net {
      * @return true if the net is connected
      */
     public boolean isInOneComponent() {
-        return getNumOfComponents() == 1;
-        /*
-         // clearing of marking
-         for (Iterator<Node> it = nodes.iterator(); it.hasNext();) {
-         Node n = it.next();
-         n.setMarking(0);
-         }
+        // short style of this method, using the other method
+        //return getNumOfComponents() == 1;
 
-         // marking of the nodes
-         Iterator<Node> it = nodes.iterator();
-         if (it.hasNext()) {
-         Node n = it.next();
-         isInOneComponentRec(n);
-         }
+        // clearing of marking
+        for (Iterator<Node> it = nodes.iterator(); it.hasNext();) {
+            Node n = it.next();
+            n.setMarking(0);
+        }
 
-         // check if all nodes are marked
-         for (Iterator<Node> it2 = nodes.iterator(); it2.hasNext();) {
-         Node n = it2.next();
-         if (n.getMarking() == 0) {
-         return false;
-         }
-         }
-         return true;
-         */
+        // marking of the nodes, choose first node
+        Iterator<Node> it = nodes.iterator();
+        if (it.hasNext()) {
+            Node n = it.next();
+            isInOneComponentRec(n);
+        }
+
+        // check if all nodes are marked
+        for (Iterator<Node> it2 = nodes.iterator(); it2.hasNext();) {
+            Node n = it2.next();
+            if (n.getMarking() == 0) {
+                return false;
+            }
+        }
+        return true;
+
     }
 
     private void isInOneComponentRec(Node n) {
@@ -184,7 +185,7 @@ public class Net {
 
     /**
      * Return variance of the net. Method getNumOfComponents() must be run
-     * before running this method (because marking of nodes). 
+     * before running this method (because marking of nodes).
      *
      * @param numOfTheComponents - number of components in the net
      * @return variance
@@ -193,7 +194,7 @@ public class Net {
         int sumOfInhabitants = 0;
         int[] inhabitantsInComponent;
         inhabitantsInComponent = new int[numOfTheComponents];
-        
+
         // iterate over all nodes and sum inhabitants
         for (Iterator<Node> it = nodes.iterator(); it.hasNext();) {
             Node n = it.next();
@@ -222,7 +223,7 @@ public class Net {
         double variance = (1 / (double) numOfTheComponents) * varRight;
 
         return Math.sqrt(variance);
-        
+
     }
 
     @Override
