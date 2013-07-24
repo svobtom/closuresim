@@ -3,13 +3,13 @@ package cz.muni.fi.closuresim;
 import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.math.BigDecimal;
-import java.math.MathContext;
-import java.text.DecimalFormat;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.Iterator;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.SortedSet;
+import java.util.TreeSet;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -35,8 +35,31 @@ public class DisconnectionCollector {
         return disconnections.add(dis);
     }
 
+    /**
+     * Get all collected disconnection.
+     *
+     * @return all disconnection
+     */
     public Set<Disconnection> getDisconnections() {
-        return Collections.unmodifiableSet(disconnections);
+        return disconnections;
+    }
+
+    /**
+     * Get all collected disconnection with specified number of closed roads. 
+     * 
+     * @return set of disconnection
+     */
+    public Set<Disconnection> getDisconnections(int numOfRoads) {
+        Set<Disconnection> result = new HashSet<>();
+        
+        for (Iterator<Disconnection> it = this.disconnections.iterator(); it.hasNext();) {
+            Disconnection disconnection = it.next();
+            if (disconnection.getNumClosedRoads() == numOfRoads) {
+                result.add(disconnection);
+            }
+        }
+        
+        return result;
     }
 
     /**
@@ -47,6 +70,17 @@ public class DisconnectionCollector {
      */
     public boolean containDisconnection(Disconnection dis) {
         return disconnections.contains(dis);
+    }
+    
+    /**
+     * Check if some set of roads make disconenction. 
+     * @param rs
+     * @return true if the set is of road is already disconnection
+     */
+    public boolean containDisconnection(RoadsSelection rs) {
+        Disconnection tempDis = new Disconnection(rs.getRoads());
+        
+        return disconnections.contains(tempDis);
     }
 
     /**
@@ -67,6 +101,23 @@ public class DisconnectionCollector {
      */
     public int getNumberOfDisconnections() {
         return disconnections.size();
+    }
+
+    /**
+     * Count number of disconnections with specific number of closed roads.
+     *
+     * @param numberOfClosedRoads - number of closed roads
+     * @return
+     */
+    public int getNumberOfDisconnections(int numberOfClosedRoads) {
+        int result = 0;
+        for (Iterator<Disconnection> it = disconnections.iterator(); it.hasNext();) {
+            Disconnection disconnection = it.next();
+            if (disconnection.getNumClosedRoads() == numberOfClosedRoads) {
+                result++;
+            }
+        }
+        return result;
     }
 
     /**
@@ -156,4 +207,19 @@ public class DisconnectionCollector {
         }
     }
 
+    public void sort(int type) {
+        Comparator comparator;
+        switch (type) {
+            case 1:
+                comparator = new VarianceComparator();
+                break;
+
+            default:
+                comparator = new VarianceComparator();
+        }
+
+        SortedSet<Disconnection> sortedSet = new TreeSet<>(comparator);
+        sortedSet.addAll(this.disconnections);
+        this.disconnections = sortedSet;
+    }
 }

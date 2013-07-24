@@ -68,8 +68,8 @@ public class Disconnection {
         return result.substring(0, result.length() - 1);
     }
 
-    public Collection<Road> getRoads() {
-        return Collections.unmodifiableCollection(roads);
+    public Set<Road> getRoads() {
+        return roads;
     }
 
     public int getNumClosedRoads() {

@@ -35,7 +35,7 @@ public class AlgorithmSimpleParallelRunTwo implements Runnable {
     public void run() {
         testCloseTwoRoads();
     }
-
+    
     private void testCloseTwoRoads() {
 
         // testing closing two roads
@@ -63,7 +63,7 @@ public class AlgorithmSimpleParallelRunTwo implements Runnable {
 
                             //System.out.println(Thread.currentThread().getName() + ": Disconnected after close roads " + r.getName() + " and " + r2.getName() + ". ");
 
-                            Set<Road> toStore = new HashSet<Road>();
+                            Set<Road> toStore = new HashSet<>();
                             toStore.add(r);
                             toStore.add(r2);
                             AlgorithmSimpleParallel.setRoadsToDisconnect.add(toStore); // todo - zrusit, je nahrazeno disconnectionCollectorem

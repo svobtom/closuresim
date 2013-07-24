@@ -18,9 +18,6 @@ public class Evaluation {
         this.net = net;
         this.disconnectionCollector = dc;
         
-        //EvaluationRunnable.disconnectionCollector = dc;
-        int discForOneThread = this.disconnectionCollector.getNumberOfDisconnections() / NUMBER_OF_THREADS ;
-        
         subCollectors = new DisconnectionCollector[NUMBER_OF_THREADS];
         for (int i = 0; i < NUMBER_OF_THREADS; i++) {
             subCollectors[i] = new DisconnectionCollector();
@@ -52,10 +49,11 @@ public class Evaluation {
             try {
                 threads[i].join();
             } catch (InterruptedException ex) {
-                Logger.getLogger(AlgorithmSimpleParallel.class.getName()).log(Level.SEVERE, null, ex);
+                ExperimentSetup.LOGGER.log(Level.SEVERE, null, ex);
             }
         }
         
+        System.out.println("Done");
     }
     
 }

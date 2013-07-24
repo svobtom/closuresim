@@ -1,7 +1,6 @@
 package cz.muni.fi.closuresim;
 
 //import cz.muni.fi.closuresim.tools.NetReducer;
-import java.util.logging.Level;
 
 /**
  *
@@ -11,16 +10,16 @@ public class ExperimentSetup {
 
     private static final int AVAILABLE_CPUs = Runtime.getRuntime().availableProcessors();
     protected static int USE_CPUs;
-    private static int MAX_CLOSED_ROADS;
-    protected static final MyLogger LOGGER = new MyLogger("experiment.log");
+    protected static final MyLogger LOGGER = new MyLogger("experiment");
 
     public static void main(String[] args) {
-        final long startExecutionTime = System.currentTimeMillis();
-        LOGGER.log(Level.INFO, "Start of experiment");
+        LOGGER.startExperiment();
         
         // implicite files (used when no arguments found)
-        String FILE_NODES = "obce_plus.csv";
-        String FILE_ROADS = "silnice_plus.csv";
+        String FILE_NODES = "obce.csv";
+        String FILE_ROADS = "silnice.csv";
+        // implicite number of closed roads
+        int MAX_CLOSED_ROADS = 1;
         
         // handle command line arguments
         if (args.length > 0 && args[0].length() > 0) {
@@ -30,15 +29,14 @@ public class ExperimentSetup {
             FILE_ROADS = args[1];
         }
         if (args.length > 2 && args[2].length() > 0) {
-            //FILE_ROADS = args[1]; // TODO - proc sem to sem dal?
-            USE_CPUs = Integer.parseInt(args[2]);
-        } else {
-            USE_CPUs = Math.min(AVAILABLE_CPUs, 20);
+            MAX_CLOSED_ROADS = Integer.parseInt(args[2]);
         }
         if (args.length > 3 && args[3].length() > 0) {
-            MAX_CLOSED_ROADS = Integer.parseInt(args[3]);
+            //FILE_ROADS = args[1]; // TODO - proc sem to sem dal?
+            USE_CPUs = Integer.parseInt(args[3]);
         } else {
-            MAX_CLOSED_ROADS = 1;
+            // second prameter is implicit value of used CPU
+            USE_CPUs = Math.min(AVAILABLE_CPUs, 8);
         }
         
         System.out.println();
@@ -48,6 +46,7 @@ public class ExperimentSetup {
         // Create new network, load nodes and roads from file
         NetLoader loader = new NetLoader();
         Net net;
+        
         // choose load function according to input file(s)
         if (args.length > 0 && "-txt".equals(args[0])) {
             net = loader.load(args[1]);
@@ -74,8 +73,7 @@ public class ExperimentSetup {
             System.exit(1);
         }
 
-        // create result collector
-        ResultCollector resultCollector = new ResultCollector();
+        // create collector of disconnection
         DisconnectionCollector disconnectionCollector = new DisconnectionCollector();
         
         // do the algorithm        
@@ -85,8 +83,9 @@ public class ExperimentSetup {
         System.out.println("------------------------------------------------------------------");
         alg.start(MAX_CLOSED_ROADS);
         System.out.println("------------------------------------------------------------------");
-        final long endAlgTime = System.currentTimeMillis();
+        LOGGER.addTime("endOfAlgorithm");
         
+        // evaluation of the disconnection
         Evaluation evaluation = new Evaluation(net, disconnectionCollector);
         System.out.println();
         System.out.println("Evaluaton started (" + evaluation.getClass().getSimpleName() + ")");
@@ -94,20 +93,19 @@ public class ExperimentSetup {
         evaluation.start();
         System.out.println("------------------------------------------------------------------");
         System.out.println();
+        LOGGER.addTime("endOfEvaluation");
+        // sorting of the evaluation
+        // 0 - number of conponent, 1 - variance
+        disconnectionCollector.sort(1);
+        LOGGER.addTime("endOfSorting");
         
-        // display and store disconnections
+        // display and store disconnections to a file
         disconnectionCollector.displayStatistics();
         disconnectionCollector.storeResultsToFile();
         System.out.println("Result was stored to files results-n.csv, where n is number of closed roads. ");
         System.out.println();
         
-        // display time of execution
-        final long endExecutionTime = System.currentTimeMillis();
-        System.out.println("Finding time is " + (endAlgTime - startExecutionTime) / 1000.0 + " seconds. ");
-        System.out.println("Evaluation time is " + (endExecutionTime - endAlgTime) / 1000.0 + " seconds. ");
-        System.out.println("Total time is " + (endExecutionTime - startExecutionTime) / 1000.0 + " seconds. ");
-        System.out.println("==================================================================");
-        LOGGER.log(Level.INFO, "End of experiment");
-        LOGGER.closeLogger();
+        LOGGER.endExperiment();
     } // end method main
+    
 } // end class

@@ -72,7 +72,7 @@ public class NetLoader {
                     name = elements[2];
                     inhab = elements[3];
                 } else {
-                    name = "";
+                    name = elements[2];
                     inhab = "0";
                 }
 
