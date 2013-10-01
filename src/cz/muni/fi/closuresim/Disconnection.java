@@ -21,7 +21,12 @@ public class Disconnection {
     private Map<Integer, Number> valuation = new HashMap<Integer, Number>();
 
     public Disconnection(Set<Road> closedRoads) {
-        roads = new HashSet<Road>();
+        roads = new HashSet<>();
+        roads.addAll(closedRoads);
+    }
+    
+     public Disconnection(Collection<Road> closedRoads) {
+        roads = new HashSet<>();
         roads.addAll(closedRoads);
     }
 

@@ -1,5 +1,6 @@
 package cz.muni.fi.closuresim;
 
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
@@ -168,6 +169,31 @@ public class Net {
         return true;
 
     }
+    
+    public boolean isInOneComponentFaster() {
+        // short style of this method, using the other method
+        //return getNumOfComponents() == 1;
+
+        // marking of the nodes, choose first node
+        Iterator<Node> it = nodes.iterator();
+        if (it.hasNext()) {
+            Node n = it.next();
+            isInOneComponentRec(n);
+        }
+
+        // check if all nodes are marked
+        boolean result = true;
+        for (Iterator<Node> it2 = nodes.iterator(); it2.hasNext();) {
+            Node n = it2.next();
+            if (n.getMarking() != 0) {
+                n.setMarking(0);
+            } else {
+                result = false;
+            }
+        }
+        return result;
+
+    }
 
     private void isInOneComponentRec(Node n) {
         // test if the node is marked
@@ -265,5 +291,54 @@ public class Net {
         clonedNet.roads = clonedRoads;
 
         return clonedNet;
+    }
+
+    public boolean distanceBetweenRoadsIsAtLeast(final int distance, Collection<Road> roads) {
+        if (distance <= 0 || roads.size() == 1) {
+            return true;
+        }
+
+        for (Road road1 : roads) {
+            for (Road road2 : roads) {
+                if (!road1.equals(road2) && getRoadDistance(road1, road2) < distance) {
+                    return false;
+                }
+            }
+        }
+
+        return true;
+    }
+
+    private int getRoadDistance(Road r1, Road r2) {
+        if (r1.equals(r2)) {
+            return 0;
+        }
+
+        if (r1.getFirst_node().equals(r2.getFirst_node())
+                || r1.getSecond_node().equals(r2.getSecond_node())
+                || r1.getFirst_node().equals(r2.getSecond_node())
+                || r1.getSecond_node().equals(r2.getFirst_node())) {
+            return 1;
+        } else {
+            return 2;
+        }
+
+        /*
+         Set<Node> tempSet1 = new HashSet<>(r1.getNodes());
+         Set<Node> tempSet2 = new HashSet<>(r2.getNodes());
+        
+         int size1 = tempSet1.size();
+         int size2 = tempSet2.size();
+        
+         tempSet1.addAll(tempSet2);
+        
+         // pokud silnice nesdilely uzly vzdalenost je 2, jinak 1 // todo dodelat, aby to vracelo realnou vzdalenost
+         if (tempSet1.size() == (size1 + size2)) {
+         return 2;
+         } else {
+         return 1;
+         }
+         */ 
+        
     }
 }

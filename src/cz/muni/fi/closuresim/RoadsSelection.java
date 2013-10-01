@@ -1,5 +1,6 @@
 package cz.muni.fi.closuresim;
 
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
@@ -61,7 +62,7 @@ public class RoadsSelection {
         return false;
     }
 
-    public boolean addRoads(Set<Road> sr) {
+    public boolean addRoads(Collection<Road> sr) {
         return roads.addAll(sr);
     }
 

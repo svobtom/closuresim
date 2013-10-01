@@ -3,6 +3,7 @@ package cz.muni.fi.closuresim;
 import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Iterator;
@@ -45,20 +46,20 @@ public class DisconnectionCollector {
     }
 
     /**
-     * Get all collected disconnection with specified number of closed roads. 
-     * 
+     * Get all collected disconnection with specified number of closed roads.
+     *
      * @return set of disconnection
      */
     public Set<Disconnection> getDisconnections(int numOfRoads) {
         Set<Disconnection> result = new HashSet<>();
-        
+
         for (Iterator<Disconnection> it = this.disconnections.iterator(); it.hasNext();) {
             Disconnection disconnection = it.next();
             if (disconnection.getNumClosedRoads() == numOfRoads) {
                 result.add(disconnection);
             }
         }
-        
+
         return result;
     }
 
@@ -71,16 +72,43 @@ public class DisconnectionCollector {
     public boolean containDisconnection(Disconnection dis) {
         return disconnections.contains(dis);
     }
-    
+
     /**
-     * Check if some set of roads make disconenction. 
+     * Check if some set of roads make disconenction.
+     *
      * @param rs
      * @return true if the set is of road is already disconnection
      */
     public boolean containDisconnection(RoadsSelection rs) {
         Disconnection tempDis = new Disconnection(rs.getRoads());
-        
+
         return disconnections.contains(tempDis);
+    }
+
+    public boolean make1RDisconnection(Collection<Road> roads) {
+        for (Road road : roads) {
+            Disconnection dis = new Disconnection(road);
+            if (disconnections.contains(dis)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public boolean make2RDisconnection(Collection<Road> roads) {
+        if (roads.size() == 1) {
+            return false;
+        }
+        
+        for (Road road1 : roads) {
+            for (Road road2 : roads) {
+                Disconnection dis = new Disconnection(road1, road2);
+                if (!road1.equals(road2) && disconnections.contains(dis)) {
+                    return true;
+                }  
+            }
+        }
+        return false;
     }
 
     /**
@@ -185,7 +213,7 @@ public class DisconnectionCollector {
                     // write to all result file
                     outAll.write(r.getName() + ";");
                 }
-                outAll.write("VALUATION;");
+                outAll.write("VAL;");
 
                 out[disconnection.getNumClosedRoads() - 1].write(Integer.toString((Integer) disconnection.getEvaluation(0)) + ";");
                 out[disconnection.getNumClosedRoads() - 1].write(Double.toString((Double) disconnection.getEvaluation(1))); // todo

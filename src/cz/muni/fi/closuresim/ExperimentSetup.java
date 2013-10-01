@@ -1,6 +1,7 @@
 package cz.muni.fi.closuresim;
 
 //import cz.muni.fi.closuresim.tools.NetReducer;
+import java.util.Properties;
 
 /**
  *
@@ -10,35 +11,30 @@ public class ExperimentSetup {
 
     private static final int AVAILABLE_CPUs = Runtime.getRuntime().availableProcessors();
     protected static int USE_CPUs;
+    protected static Properties properties;
     protected static final MyLogger LOGGER = new MyLogger("experiment");
 
     public static void main(String[] args) {
         LOGGER.startExperiment();
-        
-        // implicite files (used when no arguments found)
-        String FILE_NODES = "obce.csv";
-        String FILE_ROADS = "silnice.csv";
-        // implicite number of closed roads
-        int MAX_CLOSED_ROADS = 1;
-        
-        // handle command line arguments
+
+        // load command line arguments
+        String configFile;
         if (args.length > 0 && args[0].length() > 0) {
-            FILE_NODES = args[0];
+            configFile = args[0];
+        } else {
+            configFile = "config.properties";
         }
         if (args.length > 1 && args[1].length() > 0) {
-            FILE_ROADS = args[1];
-        }
-        if (args.length > 2 && args[2].length() > 0) {
-            MAX_CLOSED_ROADS = Integer.parseInt(args[2]);
-        }
-        if (args.length > 3 && args[3].length() > 0) {
-            //FILE_ROADS = args[1]; // TODO - proc sem to sem dal?
-            USE_CPUs = Integer.parseInt(args[3]);
+            USE_CPUs = Integer.parseInt(args[1]);
         } else {
-            // second prameter is implicit value of used CPU
+            // use implicit value of used CPU
             USE_CPUs = Math.min(AVAILABLE_CPUs, 8);
         }
-        
+
+        // load configuration file
+        ConfigFileReader cfr = new ConfigFileReader(configFile);
+        properties = cfr.loadConfiguration();
+
         System.out.println();
         System.out.println("========================== ClosureSim ===========================");
         System.out.println("Program use " + USE_CPUs + "/" + AVAILABLE_CPUs + " CPUs installed in this system. ");
@@ -46,18 +42,19 @@ public class ExperimentSetup {
         // Create new network, load nodes and roads from file
         NetLoader loader = new NetLoader();
         Net net;
-        
+
         // choose load function according to input file(s)
-        if (args.length > 0 && "-txt".equals(args[0])) {
-            net = loader.load(args[1]);
+        if (properties.getProperty("fileEdges") == null) {
+            net = loader.load(properties.getProperty("fileNodes"));
+            properties.setProperty("fileEdges", properties.getProperty("fileNodes"));
         } else {
-            net = loader.load(FILE_NODES, FILE_ROADS);
+            net = loader.load(properties.getProperty("fileNodes"), properties.getProperty("fileEdges"));
         }
-        
+
         net.setName("Silniční síť");
-        System.out.println("From file \"" + FILE_NODES + "\" was loaded " + loader.getNumOfLoadedNodes() + " nodes.");
-        System.out.println("From file \"" + FILE_ROADS + "\" was loaded " + loader.getNumOfLoadedRoads()+ " roads.");
-        
+        System.out.println("From file \"" + properties.getProperty("fileNodes") + "\" was loaded " + loader.getNumOfLoadedNodes() + " nodes.");
+        System.out.println("From file \"" + properties.getProperty("fileEdges") + "\" was loaded " + loader.getNumOfLoadedRoads() + " roads.");
+
         //NetReducer nr = new NetReducer(net);
         //nr.reduce(8);
 
@@ -75,16 +72,27 @@ public class ExperimentSetup {
 
         // create collector of disconnection
         DisconnectionCollector disconnectionCollector = new DisconnectionCollector();
-        
-        // do the algorithm        
-        Algorithm alg = new AlgorithmSimpleParallel(net, disconnectionCollector);
+
+        // do the algorithm
+        Algorithm alg;
+        switch (properties.getProperty("algorithm")) {
+            case "simpa":
+                alg = new AlgorithmSimpleParallel(net, disconnectionCollector);
+                break;
+            case "comb":
+                alg = new AlgorithmCombinatoric(net, disconnectionCollector);
+                break;
+            default:
+                throw new IllegalArgumentException("No such algorithm.");
+        }
+
         System.out.println();
         System.out.println("Finding disconnection algorithm: " + alg.getClass().getSimpleName());
         System.out.println("------------------------------------------------------------------");
-        alg.start(MAX_CLOSED_ROADS);
+        alg.start(Integer.parseInt(properties.getProperty("numberOfRoads")));
         System.out.println("------------------------------------------------------------------");
         LOGGER.addTime("endOfAlgorithm");
-        
+
         // evaluation of the disconnection
         Evaluation evaluation = new Evaluation(net, disconnectionCollector);
         System.out.println();
@@ -94,18 +102,18 @@ public class ExperimentSetup {
         System.out.println("------------------------------------------------------------------");
         System.out.println();
         LOGGER.addTime("endOfEvaluation");
+        
         // sorting of the evaluation
-        // 0 - number of conponent, 1 - variance
+        // 0 - number of components, 1 - variance
         disconnectionCollector.sort(1);
         LOGGER.addTime("endOfSorting");
-        
+
         // display and store disconnections to a file
         disconnectionCollector.displayStatistics();
         disconnectionCollector.storeResultsToFile();
         System.out.println("Result was stored to files results-n.csv, where n is number of closed roads. ");
         System.out.println();
-        
+
         LOGGER.endExperiment();
     } // end method main
-    
 } // end class
