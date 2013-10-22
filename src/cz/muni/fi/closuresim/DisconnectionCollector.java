@@ -21,6 +21,7 @@ import java.util.logging.Logger;
 public class DisconnectionCollector {
 
     private Set<Disconnection> disconnections;
+    private Comparator comparator;
 
     public DisconnectionCollector() {
         this.disconnections = Collections.synchronizedSet(new HashSet<Disconnection>());
@@ -236,18 +237,37 @@ public class DisconnectionCollector {
     }
 
     public void sort(int type) {
-        Comparator comparator;
+        
         switch (type) {
             case 1:
-                comparator = new VarianceComparator();
+                this.comparator = new VarianceComparator();
                 break;
 
             default:
-                comparator = new VarianceComparator();
+                this.comparator = new VarianceComparator();
         }
 
-        SortedSet<Disconnection> sortedSet = new TreeSet<>(comparator);
+        SortedSet<Disconnection> sortedSet = new TreeSet<>(this.comparator);
         sortedSet.addAll(this.disconnections);
         this.disconnections = sortedSet;
+    }
+
+    /**
+     * Let only specified number of disconnection. 
+     * 
+     * @param num 
+     */
+    public void letOnlyFirst(final int num) {
+        int i = 0;
+        SortedSet<Disconnection> newSet = new TreeSet<>(this.comparator);
+        for (Iterator<Disconnection> it = this.disconnections.iterator(); it.hasNext();) {
+            Disconnection disconnection = it.next();
+            if (i++ < num) {
+                newSet.add(disconnection);
+            } else {
+                break;
+            }
+        }
+        this.disconnections = newSet;
     }
 }

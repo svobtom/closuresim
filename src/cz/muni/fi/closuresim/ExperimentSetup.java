@@ -9,9 +9,22 @@ import java.util.Properties;
  */
 public class ExperimentSetup {
 
+    /**
+     * Number CPU cores on the machine.
+     */
     private static final int AVAILABLE_CPUs = Runtime.getRuntime().availableProcessors();
+    /**
+     * Maximal number of CPU cores (Threads) which application can use.
+     */
     protected static int USE_CPUs;
+    /**
+     * Properties loaded from configuration file. Properties are availible by
+     * all class int the package.
+     */
     protected static Properties properties;
+    /**
+     * Logger which log all events in application.
+     */
     protected static final MyLogger LOGGER = new MyLogger("experiment");
 
     public static void main(String[] args) {
@@ -52,14 +65,14 @@ public class ExperimentSetup {
         }
 
         net.setName("Silniční síť");
-        System.out.println("From file \"" + properties.getProperty("fileNodes") + "\" was loaded " + loader.getNumOfLoadedNodes() + " nodes.");
-        System.out.println("From file \"" + properties.getProperty("fileEdges") + "\" was loaded " + loader.getNumOfLoadedRoads() + " roads.");
+        System.out.print("From files \"" + properties.getProperty("fileNodes") + "\" ");
+        if (properties.getProperty("fileEdges") != null) {
+            System.out.print("and " + properties.getProperty("fileEdges") + " ");
+        }
+        System.out.println("was loaded " + loader.getNumOfLoadedNodes() + " nodes and " + loader.getNumOfLoadedRoads() + " roads.");
 
         //NetReducer nr = new NetReducer(net);
         //nr.reduce(8);
-
-        // display network
-        //System.out.println(net.toString());
 
         // test if the net is connected at start
         if (net.isInOneComponent()) {
@@ -82,6 +95,9 @@ public class ExperimentSetup {
             case "comb":
                 alg = new AlgorithmCombinatoric(net, disconnectionCollector);
                 break;
+            case "load":
+                alg = new AlgorithmLoadResults(net, disconnectionCollector, properties.getProperty("resultFile"));
+                break;
             default:
                 throw new IllegalArgumentException("No such algorithm.");
         }
@@ -102,7 +118,7 @@ public class ExperimentSetup {
         System.out.println("------------------------------------------------------------------");
         System.out.println();
         LOGGER.addTime("endOfEvaluation");
-        
+
         // sorting of the evaluation
         // 0 - number of components, 1 - variance
         disconnectionCollector.sort(1);
@@ -112,6 +128,15 @@ public class ExperimentSetup {
         disconnectionCollector.displayStatistics();
         disconnectionCollector.storeResultsToFile();
         System.out.println("Result was stored to files results-n.csv, where n is number of closed roads. ");
+        System.out.println();
+
+        // let only specified number of the worst disconnections
+        disconnectionCollector.letOnlyFirst(Integer.parseInt(properties.getProperty("numberToAnalyze", "100")));
+
+        // do detail analyze
+        GraphExport ge = new GraphExport(); // vizualize
+        ge.export(net);
+        ge.exportDisconnections(net, disconnectionCollector);
         System.out.println();
 
         LOGGER.endExperiment();

@@ -80,7 +80,7 @@ public class AlgorithmSimpleParallel implements Algorithm {
                     break;
             }
 
-            ExperimentSetup.LOGGER.info("All " + numOfRoads + " road(s) disconnection found");
+            ExperimentSetup.LOGGER.log(Level.INFO, "All {0} road(s) disconnection found", numOfRoads);
             System.out.println("Done (found " + disconnectionCollector.getNumberOfDisconnections(numOfRoads) + ")");
         }
     }

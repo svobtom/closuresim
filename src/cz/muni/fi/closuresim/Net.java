@@ -81,6 +81,22 @@ public class Net {
         return null;
     }
 
+    /**
+     * Find node in the net by its name.
+     *
+     * @param nodeName name fo the node
+     * @return node if exists, else null
+     */
+    public Road getRoad(final String nodeName) {
+        for (Iterator<Road> it = roads.iterator(); it.hasNext();) {
+            Road r = it.next();
+            if (r.getName().equals(nodeName)) {
+                return r;
+            }
+        }
+        return null;
+    }
+
     public Set<Road> getRoads() {
         return roads;
     }
@@ -169,7 +185,7 @@ public class Net {
         return true;
 
     }
-    
+
     public boolean isInOneComponentFaster() {
         // short style of this method, using the other method
         //return getNumOfComponents() == 1;
@@ -338,7 +354,7 @@ public class Net {
          } else {
          return 1;
          }
-         */ 
-        
+         */
+
     }
 }

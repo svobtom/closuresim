@@ -1,6 +1,5 @@
 package cz.muni.fi.closuresim;
 
-import java.util.List;
 import java.util.logging.Level;
 import org.paukov.combinatorics.*;
 
@@ -52,18 +51,36 @@ public class AlgorithmCombinatoric implements Algorithm {
                 threads[i].setName(Integer.toString(i));
             }
 
-            // check count of combination to one thread
-            int startOnCombinationsNo;
-            if (nClosedRoads == 2) {
-                startOnCombinationsNo = 450000;
-            } else {
-                startOnCombinationsNo = 0;
+            /* check count of combination to one thread */
+            
+            // get interval from properties
+            String setStart = null;
+            String setStop = null;
+            if (nClosedRoads > 1) {
+                setStart = ExperimentSetup.properties.getProperty("startOnCombinationsNo");
+                setStop = ExperimentSetup.properties.getProperty("stopOnCombinationsNo");
             }
-            final int numberOfCombinations = combinatoricNumber(vectorSize, nClosedRoads) - startOnCombinationsNo;
+
+            int stopOnCombinationNo;
+            if (setStop == null) {
+                stopOnCombinationNo = combinatoricNumber(vectorSize, nClosedRoads);
+            } else {
+                stopOnCombinationNo = Integer.parseInt(setStop);
+            }
+
+            int startOnCombinationsNo;
+            if (setStart == null) {
+                startOnCombinationsNo = 0;
+            } else {
+                startOnCombinationsNo = Integer.parseInt(setStart);
+            }
+
+            final int numberOfCombinations = stopOnCombinationNo - startOnCombinationsNo;
+
             final int forOneThread = numberOfCombinations / NUMBER_OF_THREADS;
             int nextStart = startOnCombinationsNo;
             int nextStop = nextStart + forOneThread;
-            System.out.println("Number of combinations = " + numberOfCombinations + ", combinations for one thread = " + forOneThread);
+            //System.out.println("Number of combinations = " + numberOfCombinations + ", combinations for one thread = " + forOneThread);
 
             /*
              System.out.println(vectorSize + " = " + numberOfCombinations);
@@ -78,14 +95,14 @@ public class AlgorithmCombinatoric implements Algorithm {
                 //workout[i] = gen.generateObjectsRange(nextStart, nextStop);
 
                 runnables[i].prepare(gen, nextStart, nextStop);
-                System.out.println("Thread " + i + ": range " + nextStart + " - " + (nextStop - 1));
+                //System.out.println("Thread " + i + ": range " + nextStart + " - " + (nextStop - 1));
 
-                // predposlendni iterace cyklu
+                // test na predposledni iteraci cyklu
                 if (i != NUMBER_OF_THREADS - 2) {
                     nextStart = nextStop;
                     nextStop = nextStart + forOneThread;
                 } else {
-                    System.out.println("last");
+                    // predposledni iterace cyklu (pristi pruchod je posledni)
                     nextStart = nextStop;
                     nextStop = numberOfCombinations + startOnCombinationsNo + 1;
                 }
