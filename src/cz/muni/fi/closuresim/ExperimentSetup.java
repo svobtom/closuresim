@@ -93,7 +93,7 @@ public class ExperimentSetup {
                 alg = new AlgorithmSimpleParallel(net, disconnectionCollector);
                 break;
             case "comb":
-                alg = new AlgorithmCombinatoric(net, disconnectionCollector);
+                alg = new AlgorithmCombinatoric(net, disconnectionCollector, Integer.parseInt(properties.getProperty("minDistanceOfClosedRoads", "1")));
                 break;
             case "load":
                 alg = new AlgorithmLoadResults(net, disconnectionCollector, properties.getProperty("resultFile"));

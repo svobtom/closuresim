@@ -309,6 +309,13 @@ public class Net {
         return clonedNet;
     }
 
+    /**
+     * Check if the distance between all two roads in the collection is at least a desired number. 
+     * 
+     * @param distance
+     * @param roads
+     * @return 
+     */
     public boolean distanceBetweenRoadsIsAtLeast(final int distance, Collection<Road> roads) {
         if (distance <= 0 || roads.size() == 1) {
             return true;
@@ -325,6 +332,13 @@ public class Net {
         return true;
     }
 
+    /**
+     * Check road distance. Road distance is a number which says how many nodes is on the way from first roud to the second road. 
+     * 
+     * @param r1 first road
+     * @param r2 second road
+     * @return 
+     */
     private int getRoadDistance(Road r1, Road r2) {
         if (r1.equals(r2)) {
             return 0;
@@ -336,7 +350,7 @@ public class Net {
                 || r1.getSecond_node().equals(r2.getFirst_node())) {
             return 1;
         } else {
-            return 2;
+            return 2; // TODO - zatim to jen pozna, jestli uzly spolu naprimo sousedi nebo ne
         }
 
         /*

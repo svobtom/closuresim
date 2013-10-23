@@ -14,6 +14,8 @@ import org.paukov.combinatorics.ICombinatoricsVector;
  */
 public class AlgCombRunnable implements Runnable {
 
+    private static int minDistanceOfClosedRoads;
+    
     private Net net;
     private DisconnectionCollector disconnectionCollector;
     private Queue<ICombinatoricsVector<Road>> fronta = new LinkedList<>();
@@ -67,6 +69,10 @@ public class AlgCombRunnable implements Runnable {
             if (disconnectionCollector.make1RDisconnection(listOfroadsSourceNet)) { // || disconnectionCollector.make2RDisconnection(listOfroadsSourceNet) || !net.distanceBetweenRoadsIsAtLeast(2, listOfroadsSourceNet)
                 continue;
             }
+            
+            if (minDistanceOfClosedRoads != 0 && !net.distanceBetweenRoadsIsAtLeast(minDistanceOfClosedRoads, listOfroadsSourceNet)) {
+                continue;
+            }
 
 
             List<Road> listOfroads = new ArrayList<>(listOfroadsSourceNet.size());
@@ -107,4 +113,15 @@ public class AlgCombRunnable implements Runnable {
 
         }
     }
+    
+    /**
+     * Set minimal distance of two closed roads. The algorithm doesn't try close roads,
+     * which are closer than this distance. 
+     * 
+     * @param num minimal distance
+     */
+    public static void setMinDistanceOfClosedRoads(final int num) {
+        minDistanceOfClosedRoads = num;
+    }
+    
 }

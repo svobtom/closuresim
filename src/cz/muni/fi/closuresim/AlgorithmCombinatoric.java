@@ -9,11 +9,19 @@ import org.paukov.combinatorics.*;
  */
 public class AlgorithmCombinatoric implements Algorithm {
 
+    private static final int NUMBER_OF_THREADS = ExperimentSetup.USE_CPUs;
+    
     private Net net;
     private DisconnectionCollector disconnectionCollector;
-    private static final int NUMBER_OF_THREADS = ExperimentSetup.USE_CPUs;
+    private int minDistanceOfClosedRoads = 0;
 
     public AlgorithmCombinatoric(Net net, DisconnectionCollector disconnectionCollector) {
+        this.net = net;
+        this.disconnectionCollector = disconnectionCollector;
+    }
+
+    public AlgorithmCombinatoric(Net net, DisconnectionCollector disconnectionCollector, final int minDistanceOfClosedRoads) {
+        this.minDistanceOfClosedRoads = minDistanceOfClosedRoads;
         this.net = net;
         this.disconnectionCollector = disconnectionCollector;
     }
@@ -42,6 +50,9 @@ public class AlgorithmCombinatoric implements Algorithm {
             AlgCombRunnable[] runnables = new AlgCombRunnable[NUMBER_OF_THREADS];
             Thread[] threads = new Thread[NUMBER_OF_THREADS];
 
+            // set additional common atributes of runnable
+            AlgCombRunnable.setMinDistanceOfClosedRoads(minDistanceOfClosedRoads);
+            
             // inicialize runnebles and threas
             for (int i = 0; i < NUMBER_OF_THREADS; i++) {
                 // inicialize runnable by specific algorithm modification
@@ -52,7 +63,7 @@ public class AlgorithmCombinatoric implements Algorithm {
             }
 
             /* check count of combination to one thread */
-            
+
             // get interval from properties
             String setStart = null;
             String setStop = null;
