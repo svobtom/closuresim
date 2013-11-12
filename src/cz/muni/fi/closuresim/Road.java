@@ -75,8 +75,8 @@ public class Road {
         } else {
             sn = second_node.getName();
         }
-        
-        return id +";"+ name + (closed ? " (closed" : "open") + ", " + fn + " - " + sn + ")";
+        return this.name;
+        //return id +";"+ name + (closed ? " (closed" : "open") + ", " + fn + " - " + sn + ")";
     }
 
     /**
@@ -194,6 +194,20 @@ public class Road {
 
     public void setTime(int time) {
         this.time = time;
+    }
+
+    /**
+     * Return the opposite node of the road.
+     * 
+     * @param node
+     * @return  
+     */
+    public Node getOppositeNode(Node node) {
+        if (this.first_node.equals(node)) {
+            return this.second_node;
+        } else {
+            return this.first_node;
+        }
     }
 }
 

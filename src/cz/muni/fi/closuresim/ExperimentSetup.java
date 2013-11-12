@@ -95,6 +95,9 @@ public class ExperimentSetup {
             case "comb":
                 alg = new AlgorithmCombinatoric(net, disconnectionCollector, Integer.parseInt(properties.getProperty("minDistanceOfClosedRoads", "1")));
                 break;
+            case "cycle":
+                alg = new AlgorithmCycle(net, disconnectionCollector);
+                break;
             case "load":
                 alg = new AlgorithmLoadResults(net, disconnectionCollector, properties.getProperty("resultFile"));
                 break;

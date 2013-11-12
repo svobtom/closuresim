@@ -3,9 +3,11 @@ package cz.muni.fi.closuresim;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Set;
 
 /**
+ * Net consisted by nodes and edges.
  *
  * @author Tom
  */
@@ -16,8 +18,8 @@ public class Net {
     private Set<Road> roads;
 
     public Net() {
-        nodes = new HashSet<Node>();
-        roads = new HashSet<Road>();
+        nodes = new HashSet<>();
+        roads = new HashSet<>();
     }
 
     @Override
@@ -33,7 +35,7 @@ public class Net {
         this.name = name;
     }
 
-    public Set getNodes() {
+    public Set<Node> getNodes() {
         return nodes;
     }
 
@@ -187,8 +189,6 @@ public class Net {
     }
 
     public boolean isInOneComponentFaster() {
-        // short style of this method, using the other method
-        //return getNumOfComponents() == 1;
 
         // marking of the nodes, choose first node
         Iterator<Node> it = nodes.iterator();
@@ -197,7 +197,7 @@ public class Net {
             isInOneComponentRec(n);
         }
 
-        // check if all nodes are marked
+        // check if all nodes are marked and zero the marking
         boolean result = true;
         for (Iterator<Node> it2 = nodes.iterator(); it2.hasNext();) {
             Node n = it2.next();
@@ -211,18 +211,23 @@ public class Net {
 
     }
 
-    private void isInOneComponentRec(Node n) {
+    /**
+     * Mark node (by number 1) and run itself on neighbours.
+     *
+     * @param n node to mark
+     */
+    private void isInOneComponentRec(final Node n) {
         // test if the node is marked
-        if (n.getMarking() == 1) {
-            return;
-        }
+        if (n.getMarking() != 1) {
 
-        n.setMarking(1);
-        Set neighbours = n.getNeighbours();
-        for (Iterator<Node> it = neighbours.iterator(); it.hasNext();) {
-            Node neighbour = it.next();
-            isInOneComponentRec(neighbour);
-        }
+            n.setMarking(1);
+            //final Set neighbours = n.getNeighbours();
+            for (Iterator<Node> it = n.getNeighbours().iterator(); it.hasNext();) {
+                //Node neighbour = it.next();
+                isInOneComponentRec(it.next());
+            }
+            
+        } // else return;
     }
 
     /**
@@ -310,11 +315,12 @@ public class Net {
     }
 
     /**
-     * Check if the distance between all two roads in the collection is at least a desired number. 
-     * 
+     * Check if the distance between all two roads in the collection is at least
+     * a desired number.
+     *
      * @param distance
      * @param roads
-     * @return 
+     * @return
      */
     public boolean distanceBetweenRoadsIsAtLeast(final int distance, Collection<Road> roads) {
         if (distance <= 0 || roads.size() == 1) {
@@ -333,11 +339,12 @@ public class Net {
     }
 
     /**
-     * Check road distance. Road distance is a number which says how many nodes is on the way from first roud to the second road. 
-     * 
+     * Check road distance. Road distance is a number which says how many nodes
+     * is on the way from first roud to the second road.
+     *
      * @param r1 first road
      * @param r2 second road
-     * @return 
+     * @return
      */
     private int getRoadDistance(Road r1, Road r2) {
         if (r1.equals(r2)) {
@@ -370,5 +377,5 @@ public class Net {
          }
          */
 
-    }
+    }    
 }

@@ -66,7 +66,7 @@ public class GraphExport {
 
     }
 
-    void exportDisconnections(Net net, DisconnectionCollector disconnectionCollector) {
+    public void exportDisconnections(Net net, DisconnectionCollector disconnectionCollector) {
 
         int number = 1;
         for (Disconnection disconnection : disconnectionCollector.getDisconnections()) {
@@ -112,7 +112,7 @@ public class GraphExport {
                 Vertex b = mapa.get(road.getSecond_node().getId());
 
                 Edge e = graph.addEdge("e" + road.getId(), a, b, road.getName());
-
+                
                 if (road.isClosed()) {
                     //e.setProperty("weight", 3);
                     e.setProperty("r", 255);
@@ -121,11 +121,10 @@ public class GraphExport {
                 } else {
                     //e.setProperty("weight", 2);
                 }
-
             }
 
-
             try {
+                
                 GraphMLWriter.outputGraph(graph, "disconnection-" + number++ + ".graphml");
             } catch (IOException ex) {
                 ExperimentSetup.LOGGER.log(Level.SEVERE, null, ex);
@@ -143,49 +142,58 @@ public class GraphExport {
         }
     }
 
-    private void colorVertex(Vertex v, int marking) {
+    private void colorVertex(Vertex v, final int marking) {
         v.setProperty("r", getColor("r", marking));
         v.setProperty("g", getColor("g", marking));
         v.setProperty("b", getColor("b", marking));
     }
 
-    private int getColor(String part, int turn) {
+    private int getColor(final String part, final int turn) {
         switch (turn) {
             case 1:
                 switch (part) {
                     case "r":
                         return 0;
                     case "g":
-                        return 255;
+                        return 175;
                     case "b":
-                        return 0;
+                        return 100;
                 }
             case 2:
                 switch (part) {
                     case "r":
-                        return 0;
+                        return 11;
                     case "g":
-                        return 255;
+                        return 97;
                     case "b":
-                        return 255;
+                        return 164;
                 }
             case 3:
                 switch (part) {
                     case "r":
-                        return 0;
-                    case "g":
-                        return 0;
-                    case "b":
                         return 255;
+                    case "g":
+                        return 146;
+                    case "b":
+                        return 0;
                 }
             case 4:
                 switch (part) {
                     case "r":
-                        return 0;
+                        return 255;
                     case "g":
-                        return 120;
+                        return 73;
                     case "b":
-                        return 120;
+                        return 0;
+                }
+            case 5:
+                switch (part) {
+                    case "r":
+                        return 84;
+                    case "g":
+                        return 14;
+                    case "b":
+                        return 173;
                 }
         }
 

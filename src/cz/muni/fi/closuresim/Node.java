@@ -95,7 +95,8 @@ public class Node {
         } else {
             n_name = this.name + ", ";
         }
-        return "\n" + this.id + ":" + " " + n_name + n_type + ", connected=" + getConnectedCities();
+        return this.name + " (" + this.id + ", " + n_type + ")";
+        //return "\n" + this.id + ":" + " " + n_name + n_type + ", connected=" + getConnectedCities();
     }
 
     public void setType(String type) {
@@ -114,7 +115,7 @@ public class Node {
         this.id = id;
     }
 
-    public Set getRoads() {
+    public Set<Road> getRoads() {
         return roads;
     }
 
