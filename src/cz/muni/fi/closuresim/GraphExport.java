@@ -10,6 +10,7 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Random;
 import java.util.logging.Level;
 
 /**
@@ -112,7 +113,7 @@ public class GraphExport {
                 Vertex b = mapa.get(road.getSecond_node().getId());
 
                 Edge e = graph.addEdge("e" + road.getId(), a, b, road.getName());
-                
+
                 if (road.isClosed()) {
                     //e.setProperty("weight", 3);
                     e.setProperty("r", 255);
@@ -124,7 +125,7 @@ public class GraphExport {
             }
 
             try {
-                
+
                 GraphMLWriter.outputGraph(graph, "disconnection-" + number++ + ".graphml");
             } catch (IOException ex) {
                 ExperimentSetup.LOGGER.log(Level.SEVERE, null, ex);
@@ -194,6 +195,18 @@ public class GraphExport {
                         return 14;
                     case "b":
                         return 173;
+                }
+            default:
+                Random rand = new Random();
+                final int min = 0;
+                final int max = 255;
+                switch (part) {
+                    case "r":
+                        return rand.nextInt((max - min) + 1) + min;
+                    case "g":
+                        return rand.nextInt((max - min) + 1) + min;
+                    case "b":
+                        return rand.nextInt((max - min) + 1) + min;
                 }
         }
 

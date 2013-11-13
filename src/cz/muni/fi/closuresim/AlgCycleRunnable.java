@@ -7,7 +7,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.TreeMap;
 
 /**
  *
@@ -17,111 +16,110 @@ public class AlgCycleRunnable implements Runnable {
 
     private Net net;
     private DisconnectionCollector disconnectionCollector;
-    private Set<Road> rRoads;
 
     public AlgCycleRunnable(Net net, DisconnectionCollector disconnectionCollector) {
         this.net = net.clone();
         this.disconnectionCollector = disconnectionCollector;
-        rRoads = new HashSet<>();
     }
 
     @Override
     public void run() {
 
-        // 1. Zvolim hranu e
-        findShortestCycle(net.getRoads().iterator().next());
+        // vlakna paralelne provedou algoritmus pocinaje od kazde cesty
+        while (!AlgorithmCycle.queue.isEmpty()) {
+            Road roadToStart = AlgorithmCycle.queue.poll();
+            if (roadToStart != null) {
+                Set<Road> bannedRoads = new HashSet<>();
+                bannedRoads.add(roadToStart);
+                // 1. Zvolim hranu e (jednu vybranou cestu)
+                theFindCyclesAlgorithm(bannedRoads, roadToStart);
+            }
+        }
+        
+    }
+
+    /**
+     * Do the algorithm.
+     *
+     * @param bannedRoads set of banned roads
+     * @param road road which was chosen in the cycle
+     */
+    private void theFindCyclesAlgorithm(Set<Road> bannedRoads, Road road) {
+
+        // najde nejkratsi cestu z a do b, bez pouziti cest z bannedRoads
+        // a, b jsou vrcholy vybrane cesty, samotna cesta jiz patri do banned roads, takze nenalezne trivialni cestu
+        // obsahujici pouze prave tuto cestu
+        List<Road> path = findShortestPath(road.getFirst_node(), road.getSecond_node(), bannedRoads);
 
         /*
-         //for (Iterator<Road> it = net.getRoads().iterator(); it.hasNext();) {
-         //Road road = it.next();
-         Iterator<Node> ni = net.getNodes().iterator();
-         //search(ni.next(), ni.next(), new HashSet<Road>());
-         //findShortestCycle(net.getRoads().iterator().next());
-         Node temp = ni.next();
-         getPath(net, temp, ni.next());
-         getPath(net, ni.next(), ni.next());
-         getPath(net, ni.next(), ni.next());
-         getPath(net, ni.next(), ni.next());
-         getPath(net, ni.next(), temp);
-         getPath(net, ni.next(), ni.next());
-         // }
-         * */
+         System.out.println("Roads: ");
+         for (Road road1 : path) {
+         System.out.print(road1 + " ");
+         }
+         System.out.println();
+         */
 
+        // existuje cesta?
+        if (path.isEmpty()) {
+            // cesta neexistuje, mame rez, poznacime si ho
+            Disconnection dis = new Disconnection(bannedRoads);
+            disconnectionCollector.addDisconnection(dis);
+        } else {
+            // cesta existuje, rez zatim nemame
+
+            // pro kazdou cestu na nejkratsi kruznici
+            for (Road roadInPath : path) {
+                // vytvorime nove zakazane cesty, tak ze k jiz soucasnym zakazanym pridame cesty, ktere jsou na prave nalezene kruznici
+                Set<Road> newBannedRoads = new HashSet<>(bannedRoads);
+                newBannedRoads.add(roadInPath); //newBannedRoads.addAll(path);
+
+                // spustime algoritmus rekurzivne
+                theFindCyclesAlgorithm(newBannedRoads, roadInPath);
+            }
+        }
     }
 
-    private void findShortestCycle(Road road) {
+    /**
+     * Find shortest path using dijkstra algorithm.
+     *
+     * @param source source node
+     * @param target target node
+     * @param bannedRoads set of banned roads
+     * @return
+     */
+    private List<Road> findShortestPath(Node source, Node target, Set<Road> bannedRoads) {
 
-        rRoads.add(road);
-        for (Road hrana : rRoads) {
-            List<Road> lr = getPath(hrana.getFirst_node(), hrana.getSecond_node());
+        //System.out.println(source + " => " + target);
 
-            if (lr.isEmpty()) {
-                Disconnection dis = new Disconnection(rRoads);
-                disconnectionCollector.addDisconnection(dis);
+        // nalezeni nejkratsi cestu z a do b bez pouziti cest v bannedRoads
+        Map<Node, NodeAndRoad> mapOfAncestors = dijkstra(source, target, bannedRoads);
+
+        // rekonstruuj nalezenou nejkratsi cestu z mapy predchudcu
+        List<Road> listOfRoadsOnThePath = new LinkedList<>();
+        Node recent = target;
+        while (!recent.equals(source)) {
+            NodeAndRoad previous = mapOfAncestors.get(recent);
+
+            if (previous == null) {
+                return listOfRoadsOnThePath;
             }
 
-            //rRoads.addAll(lr.iterator().next());
-
+            listOfRoadsOnThePath.add(previous.getRoad());
+            recent = previous.getNode();
         }
 
+        return listOfRoadsOnThePath;
     }
-    /*
-     private List<Road> findPath(Node first, Node second, List<Road> currentPath) {
-     System.out.println("Path: " + currentPath); //"First: " + first + "; Second: " + second + ",
-     if (first.equals(second)) {
-     return currentPath;
-     }
 
-     Set<Road> useableRoads;
-     useableRoads = first.getRoads();
-     useableRoads.removeAll(bannedRoads);
-
-     List<Road> path = new LinkedList<>();
-
-     for (Road road : useableRoads) {
-
-     currentPath.add(road);
-     bannedRoads.add(road);
-     Node firstOpposite = road.getOppositeNode(first);
-
-     return findPath(firstOpposite, second, currentPath);
-     }
-
-     return null;
-
-
-     }
-
-     public void search(Node n1, Node n2, Set<Road> path) {
-
-     if (n1.equals(n2)) {
-     System.out.println("We are there. ");
-     return;
-     }
-
-     System.out.println(n1.getName() + " - " + n2.getName() + ", ");
-     for (Road road : path) {
-     System.out.println(road.getName() + " ");
-     }
-     System.out.println("");
-
-     for (Iterator<Road> it = n1.getRoads().iterator(); it.hasNext();) {
-     Road road = it.next();
-
-     if (path.contains(road)) {
-     continue;
-     }
-     path.add(road);
-     Node opposite = road.getOppositeNode(n1);
-
-     search(opposite, n2, path);
-
-     }
-
-     }
+    /**
+     * Dijkstra algorithm.
+     *
+     * @param source start node
+     * @param target target node
+     * @param bannedRoads set of roads which are banned on the returned path
+     * @return map of nodes and its ancestors on the optimal path
      */
-
-    private Map<Node, NodeAndRoad> dijkstra(Node source, Node target) {
+    private Map<Node, NodeAndRoad> dijkstra(Node source, Node target, Set<Road> bannedRoads) {
         Map<Node, Integer> distance = new HashMap<>();
         Map<Node, Boolean> visited = new HashMap<>();
         //Map<Node, Node> previous = new HashMap<>(); // previous node in the best path
@@ -153,19 +151,18 @@ public class AlgCycleRunnable implements Runnable {
                 }
             }
 
-
             // if we closed target node
             if (target.equals(u)) {
                 return previousRoad;
             }
-
 
             queue.remove(u);
             visited.put(u, Boolean.TRUE);
 
             for (Road r : u.getRoads()) {
 
-                if (r.isClosed() || rRoads.contains(r)) {
+                // skip closed and banned roads
+                if (bannedRoads.contains(r) || r.isClosed()) {
                     continue;
                 }
 
@@ -180,43 +177,5 @@ public class AlgCycleRunnable implements Runnable {
             } // end for
         } // end while
         return previousRoad;
-    }
-
-    private List<Road> getPath(Node source, Node target) {
-
-        System.out.println(source + " => " + target);
-        Map<Node, NodeAndRoad> map = dijkstra(source, target);
-
-        /*
-         System.out.println(map.size());
-         for (Map.Entry<Node, NodeAndRoad> entry : map.entrySet()) {
-         Node node = entry.getKey();
-         NodeAndRoad nodeAndRoad = entry.getValue();
-
-         System.out.print(nodeAndRoad.getNode() + "->" + node + "; ");
-         }
-         System.out.println();
-         System.out.println();
-         */
-
-        List<Road> lr = new LinkedList<>();
-
-        Node recent = target;
-
-        while (!recent.equals(source)) {
-            NodeAndRoad pre = map.get(recent);
-            lr.add(pre.getRoad());
-            recent = pre.getNode();
-        }
-
-        /*
-         for (Iterator<Road> it = lr.iterator(); it.hasNext();) {
-         Road road = it.next();
-         System.out.print(road + " ");
-         }
-         System.out.println();
-         */
-
-        return lr;
     }
 }
