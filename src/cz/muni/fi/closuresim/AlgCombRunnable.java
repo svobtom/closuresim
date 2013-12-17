@@ -68,9 +68,11 @@ public class AlgCombRunnable implements Runnable {
                 continue;
             }
 
+            /*
             if (minDistanceOfClosedRoads != 0 && !net.distanceBetweenRoadsIsAtLeast(minDistanceOfClosedRoads, listOfroadsSourceNet)) {
                 continue;
             }
+            */
 
 
             List<Road> listOfroads = new ArrayList<>(listOfroadsSourceNet.size());

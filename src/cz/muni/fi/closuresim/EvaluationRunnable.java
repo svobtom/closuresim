@@ -34,9 +34,9 @@ public class EvaluationRunnable implements Runnable {
 
             // evaluating
             int numOfComp = net.getNumOfComponents();
-            disconnection.setEvaluation(0, numOfComp);
+            disconnection.setEvaluation(Valuation.COMPONENTS, numOfComp);
             double variance = net.getValueOfBadness(numOfComp);
-            disconnection.setEvaluation(1, variance);
+            disconnection.setEvaluation(Valuation.VARIANCE, variance);
             //System.out.println(Thread.currentThread().getName() + ": Disconnection (" + disconnection.getRoadsNames() +") evaluated.");
 
         }

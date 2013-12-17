@@ -3,7 +3,6 @@ package cz.muni.fi.closuresim;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
-import javax.swing.text.StyledEditorKit;
 
 /**
  *
@@ -19,25 +18,25 @@ public class Node {
     private int numOfInhabitants;
 
     public Node() {
-        roads = new HashSet<Road>();
+        roads = new HashSet<>();
     }
 
     /**
-     * Copy node except the roads.
+     * Copy node without information about roads.
      * @param n Node to copy
      */
-    public Node(Node n) {
+    public Node(final Node n) {
         this.id = n.id;
         this.type = n.type;
         this.name = n.name;
         this.marking = n.marking;
         this.numOfInhabitants = n.numOfInhabitants;
-        roads = new HashSet<Road>();
+        roads = new HashSet<>();
     }
 
     @Override
     public int hashCode() {
-        int hash = 7;
+        int hash = 3;
         hash = 29 * hash + this.id;
         return hash;
     }
@@ -116,7 +115,7 @@ public class Node {
     }
 
     public Set<Road> getRoads() {
-        return roads;
+        return this.roads;
     }
 
     public void setRoads(Set roads) {

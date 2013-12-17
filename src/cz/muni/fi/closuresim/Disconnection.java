@@ -1,7 +1,6 @@
 package cz.muni.fi.closuresim;
 
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Set;
@@ -13,43 +12,46 @@ import java.util.Map;
  * @author Tom
  */
 public class Disconnection {
-    /** Roads which was closed */
+
+    /**
+     * Roads which was closed
+     */
     private Set<Road> roads;
     /**
      * Map of valuations of the disconnection
      */
-    private Map<Integer, Number> valuation = new HashMap<Integer, Number>();
+    private Map<Valuation, Number> valuation = new HashMap<>();
 
     public Disconnection(Set<Road> closedRoads) {
         roads = new HashSet<>();
         roads.addAll(closedRoads);
     }
-    
-     public Disconnection(Collection<Road> closedRoads) {
+
+    public Disconnection(Collection<Road> closedRoads) {
         roads = new HashSet<>();
         roads.addAll(closedRoads);
     }
 
     public Disconnection(Road r1) {
-        roads = new HashSet<Road>();
+        roads = new HashSet<>();
         roads.add(r1);
     }
 
     public Disconnection(Road r1, Road r2) {
-        roads = new HashSet<Road>();
+        roads = new HashSet<>();
         roads.add(r1);
         roads.add(r2);
     }
 
     public Disconnection(Road r1, Road r2, Road r3) {
-        roads = new HashSet<Road>();
+        roads = new HashSet<>();
         roads.add(r1);
         roads.add(r2);
         roads.add(r3);
     }
 
     public Disconnection(Road r1, Road r2, Road r3, Road r4) {
-        roads = new HashSet<Road>();
+        roads = new HashSet<>();
         roads.add(r1);
         roads.add(r2);
         roads.add(r3);
@@ -105,17 +107,15 @@ public class Disconnection {
     }
 
     /*
-    public Map<Integer, Number> getValuation() {
-        return valuation;
+     public Map<Integer, Number> getValuation() {
+     return valuation;
+     }
+     */
+    public void setEvaluation(Valuation v, Number num) {
+        this.valuation.put(v, num);
     }
-    */
-    
-    public void setEvaluation(int type, Number num) {
-        this.valuation.put(type, num);
+
+    public Number getEvaluation(Valuation v) {
+        return this.valuation.get(v);
     }
-    
-    public Number getEvaluation(int type) {
-        return this.valuation.get(type);
-    }
-    
 }

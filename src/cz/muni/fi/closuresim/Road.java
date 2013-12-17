@@ -160,7 +160,7 @@ public class Road {
      * @return Set<Node> 
      */
     public Set getNodes() {
-        Set nodes = new HashSet<Node>();
+        Set nodes = new HashSet<>();
         nodes.add(this.first_node);
         nodes.add(this.second_node);
         return nodes;
@@ -197,12 +197,13 @@ public class Road {
     }
 
     /**
-     * Return the opposite node of the road.
-     * 
-     * @param node
-     * @return  
+     * Return the opposite node of the road. If given node is the first node the method return second node, 
+     * otherwise it return first node. 
+     *  
+     * @param given node
+     * @return opposite node
      */
-    public Node getOppositeNode(Node node) {
+    public Node getOppositeNode(final Node node) {
         if (this.first_node.equals(node)) {
             return this.second_node;
         } else {

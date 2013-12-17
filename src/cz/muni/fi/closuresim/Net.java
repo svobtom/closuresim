@@ -68,12 +68,12 @@ public class Net {
     }
 
     /**
-     * Find node in the net
+     * Find road in the net
      *
-     * @param node_id
-     * @return found node if exists, else null
+     * @param roadID
+     * @return found road if exists, else null
      */
-    public Road getRoad(int roadID) {
+    public Road getRoad(final int roadID) {
         for (Iterator<Road> it = roads.iterator(); it.hasNext();) {
             Road r = it.next();
             if (r.getId() == roadID) {

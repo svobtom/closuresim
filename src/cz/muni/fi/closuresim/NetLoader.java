@@ -32,7 +32,7 @@ public class NetLoader {
      * @param fileRoad path to the file with roads
      * @return Net - loaded network
      */
-    public Net load(String fileCity, String fileRoad) {
+    public Net load(final String fileCity, final String fileRoad) {
         loadNodes(fileCity);
         loadRoads(fileRoad);
         return net;
@@ -44,12 +44,17 @@ public class NetLoader {
      * @param oneFile path to the file in format of CDV
      * @return Net - loaded network
      */
-    public Net load(String oneFile) {
+    public Net load(final String oneFile) {
         convertFromFormatCDV(oneFile);
         return net;
     }
 
-    private void loadNodes(String fileCity) {
+    /**
+     * Load nodes from a file.
+     *
+     * @param fileCity
+     */
+    private void loadNodes(final String fileCity) {
         try {
             //START loading nodes
             InputStream fis = new FileInputStream(fileCity);
@@ -61,7 +66,7 @@ public class NetLoader {
                 String[] elements = line.split(";");
 
                 if (elements.length < 2) {
-                    throw new RuntimeException("line too short");
+                    ExperimentSetup.LOGGER.log(Level.SEVERE, "loading nodes - line is too short");
                 }
 
                 String sid = elements[0];
@@ -76,8 +81,8 @@ public class NetLoader {
                     inhab = "0";
                 }
 
-                int id = Integer.parseInt(sid);
-                int inhabitions = Integer.parseInt(inhab);
+                final int id = Integer.parseInt(sid);
+                final int inhabitions = Integer.parseInt(inhab);
 
                 Node n = new Node();
                 n.setId(id);
@@ -89,15 +94,18 @@ public class NetLoader {
 
             }
         } catch (FileNotFoundException ex) {
-            ExperimentSetup.LOGGER.log(Level.SEVERE, null, ex);
-            System.err.println("File with nodes not found.");
-            System.exit(1);
+            ExperimentSetup.LOGGER.log(Level.SEVERE, "File with nodes not found.", ex);
         } catch (IOException ex) {
-            ExperimentSetup.LOGGER.log(Level.SEVERE, null, ex);
+            ExperimentSetup.LOGGER.log(Level.SEVERE, "IO exception occur.", ex);
         }
     }
 
-    private void loadRoads(String fileRoad) {
+    /**
+     * Load roads from the file.
+     *
+     * @param fileRoad
+     */
+    private void loadRoads(final String fileRoad) {
         try {
             InputStream fis = new FileInputStream(fileRoad);
             BufferedReader br = new BufferedReader(new InputStreamReader(fis, Charset.forName("UTF-8")));
@@ -108,7 +116,7 @@ public class NetLoader {
                 String[] elements = line.split(";");
 
                 if (elements.length < 3) {
-                    throw new RuntimeException("line too short");
+                    ExperimentSetup.LOGGER.log(Level.SEVERE, "loading roads - line is too short");
                 }
 
                 String sid = elements[0];
@@ -118,11 +126,11 @@ public class NetLoader {
                 String slength = elements[4];
                 String stime = elements[5];
 
-                int id = Integer.parseInt(sid);
-                int start = Integer.parseInt(sstart);
-                int end = Integer.parseInt(send);
-                int length = Integer.parseInt(slength);
-                int time = Integer.parseInt(stime);
+                final int id = Integer.parseInt(sid);
+                final int start = Integer.parseInt(sstart);
+                final int end = Integer.parseInt(send);
+                final int length = Integer.parseInt(slength);
+                final int time = Integer.parseInt(stime);
 
                 Road r = new Road();
                 r.setId(id);
@@ -133,27 +141,37 @@ public class NetLoader {
                 Node start_node = this.net.getNode(start);
                 Node end_node = this.net.getNode(end);
 
-                r.setNodes(start_node, end_node);
-                start_node.addRoad(r);
-                end_node.addRoad(r);
+                if (start_node == null || end_node == null) {
+                    ExperimentSetup.LOGGER.log(Level.SEVERE, "Node wasn't found while loading roads.");
+                } else {
 
-                net.addRoad(r);
-                //System.out.println(r.toString());
+                    r.setNodes(start_node, end_node);
 
+                    start_node.addRoad(r);
+                    end_node.addRoad(r);
+
+                    net.addRoad(r);
+                }
             }
         } catch (FileNotFoundException ex) {
-            ExperimentSetup.LOGGER.log(Level.SEVERE, null, ex);
-            System.err.println("File with roads not found.");
-            System.exit(1);
+            ExperimentSetup.LOGGER.log(Level.SEVERE, "File with roads not found.", ex);
         } catch (IOException ex) {
-            Logger.getLogger(NetLoader.class.getName()).log(Level.SEVERE, null, ex);
+            ExperimentSetup.LOGGER.log(Level.SEVERE, "IO exception occur.", ex);
         }
     }
 
+    /**
+     * 
+     * @return number of nodes
+     */
     public int getNumOfLoadedNodes() {
         return this.net.getNodes().size();
     }
 
+    /**
+     * 
+     * @return number of roads
+     */
     public int getNumOfLoadedRoads() {
         return this.net.getRoads().size();
     }
@@ -163,15 +181,15 @@ public class NetLoader {
      *
      * @param oneFile path to the file in CDV format
      */
-    private void convertFromFormatCDV(String oneFile) {
+    private void convertFromFormatCDV(final String oneFile) {
         // create structure where will be load the data from source file
         List<Node> nodes = new LinkedList();
         List<Road> roads = new LinkedList();
 
-        // read source file for nodes
+        // read source file to get nodes
         readNodes(oneFile, nodes);
 
-        // read source file for roads
+        // read source file to get roads
         readRoads(oneFile, nodes, roads);
 
         // create csv file with nodes
@@ -186,7 +204,13 @@ public class NetLoader {
         load(nodesFile, roadsFile);
     }
 
-    private void readNodes(String fileName, List<Node> nodes) {
+    /**
+     * Read CDV format file to get nodes.
+     * 
+     * @param fileName name of the file
+     * @param nodes
+     */
+    private void readNodes(final String fileName, List<Node> nodes) {
         try {
             InputStream fis = new FileInputStream(fileName);
             BufferedReader br = new BufferedReader(new InputStreamReader(fis, Charset.forName("UTF-8")));
@@ -209,22 +233,27 @@ public class NetLoader {
                     node.setId(i);
                     node.setName(line_elements[0]);
                     int num = Integer.parseInt(line_elements[1]);
-                    node.setNumOfInhabitants(num); //setNumInhabitions(num);
+                    node.setNumOfInhabitants(num);
                     nodes.add(node);
                     i++;
 
                 }
             }
         } catch (FileNotFoundException ex) {
-            ExperimentSetup.LOGGER.log(Level.SEVERE, null, ex);
-            System.err.println("File with nodes and rodes not found.");
-            System.exit(1);
+            ExperimentSetup.LOGGER.log(Level.SEVERE, "File with nodes and rodes not found.", ex);
         } catch (IOException ex) {
-            ExperimentSetup.LOGGER.log(Level.SEVERE, null, ex);
+            ExperimentSetup.LOGGER.log(Level.SEVERE, "IO exception occur.", ex);
         }
     }
 
-    private void readRoads(String fileName, List<Node> nodes, List<Road> roads) {
+    /**
+     * Read CDV file to get information about roads.
+     * 
+     * @param fileName
+     * @param nodes
+     * @param roads 
+     */
+    private void readRoads(final String fileName, final List<Node> nodes, List<Road> roads) {
         try {
             InputStream fis = new FileInputStream(fileName);
             BufferedReader br = new BufferedReader(new InputStreamReader(fis, Charset.forName("UTF-8")));
@@ -250,7 +279,7 @@ public class NetLoader {
 
                     String roadsString;
                     StringTokenizer st = new StringTokenizer(elements[1], " ");
-                    int poc = 0;
+                    //int poc = 0;
                     while (st.hasMoreElements()) {
                         roadsString = (String) st.nextElement();
 
@@ -258,7 +287,7 @@ public class NetLoader {
 
                             //String string = roadsString[poc];
                             //System.out.println(" (" + roadsString + ") --- ");
-                            poc++;
+                            //poc++;
                         } else {
                             roadsString += " " + (String) st.nextElement();
                             //System.out.println(" (" + roadsString + ") === ");
@@ -284,7 +313,7 @@ public class NetLoader {
                                     r.setLength(Integer.parseInt(oneRoad[3]));//r.setDistance(Integer.parseInt(oneRoad[3]));
                                 }
                                 if (oneRoad.length > 4) {
-                                    r.setTime(Integer.parseInt(oneRoad[4]));
+                                    r.setTime((int) Double.parseDouble(oneRoad[4]));
                                 }
 
                                 // test if the road has been loaded yet
@@ -313,11 +342,9 @@ public class NetLoader {
                 }
             }
         } catch (FileNotFoundException ex) {
-            ExperimentSetup.LOGGER.log(Level.SEVERE, null, ex);
-            System.err.println("File with nodes and rodes not found.");
-            System.exit(1);
+            ExperimentSetup.LOGGER.log(Level.SEVERE, "File with nodes and rodes not found.", ex);
         } catch (IOException ex) {
-            ExperimentSetup.LOGGER.log(Level.SEVERE, null, ex);
+            ExperimentSetup.LOGGER.log(Level.SEVERE, "IO exception occur.", ex);
         }
 
         // System.out.println(roads.toString());
