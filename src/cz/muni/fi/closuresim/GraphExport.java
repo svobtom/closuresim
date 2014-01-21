@@ -94,7 +94,7 @@ public class GraphExport {
 
                 // create new graph
                 Graph graph = new TinkerGraph();
-
+                
                 // mapping new vertex to integer, useful for creating edges
                 Map<Integer, Vertex> mapa = new HashMap<>(net.getNodes().size());
 

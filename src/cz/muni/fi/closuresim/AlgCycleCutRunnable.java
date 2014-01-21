@@ -8,12 +8,16 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
+import org.jgrapht.Graph;
+import org.jgrapht.alg.KruskalMinimumSpanningTree;
+import org.jgrapht.graph.Multigraph;
+import org.jgrapht.graph.UndirectedSubgraph;
 
 /**
  *
  * @author Tom
  */
-public class AlgCycleRunnable implements Runnable {
+public class AlgCycleCutRunnable implements Runnable {
 
     private final Net net;
     private final List<Disconnection> disconnections;
@@ -22,7 +26,7 @@ public class AlgCycleRunnable implements Runnable {
     private final int maxNumberOfComponents;
     private final boolean findOnlyAccurateDisconnection;
 
-    public AlgCycleRunnable(Net net, DisconnectionCollector dc, final int roads, final int comp, final boolean findOnlyAccurateDisconnection) {
+    public AlgCycleCutRunnable(Net net, DisconnectionCollector dc, final int roads, final int comp, final boolean findOnlyAccurateDisconnection) {
         this.net = net.clone();
         this.disconnections = new LinkedList<>();
         this.disconnectionCollector = dc;
@@ -36,8 +40,8 @@ public class AlgCycleRunnable implements Runnable {
         ExperimentSetup.LOGGER.log(Level.INFO, "Thread {0} started.", Thread.currentThread().getName());
 
         // vlakna paralelne provedou algoritmus pocinaje od kazde cesty
-        while (!AlgorithmCycle.queue.isEmpty()) {
-            final Road roadToStart = AlgorithmCycle.queue.poll();
+        while (!AlgorithmCycleCut.queueOfRoads.isEmpty()) {
+            final Road roadToStart = AlgorithmCycleCut.queueOfRoads.poll();
             if (roadToStart != null) {
                 // get the road in the cloned net
                 final Road cRoadToStart = this.net.getRoad(roadToStart.getId());
@@ -46,7 +50,7 @@ public class AlgCycleRunnable implements Runnable {
                 bannedRoads.add(cRoadToStart);
 
                 // 1. Zvolim hranu e (jednu vybranou cestu)
-                theFindCyclesAlgorithm(bannedRoads, cRoadToStart, 1);
+                theFindCyclesCutAlgorithm(bannedRoads, cRoadToStart, 1);
 
                 // add found disconnections by one run of the algorithm
                 final int numFoundDis = this.disconnections.size();
@@ -65,7 +69,7 @@ public class AlgCycleRunnable implements Runnable {
      * @param bannedRoads set of banned roads
      * @param road road which was chosen in the cycle
      */
-    private void theFindCyclesAlgorithm(final Set<Road> bannedRoads, final Road road, final int components) {
+    private void theFindCyclesCutAlgorithm(final Set<Road> bannedRoads, final Road road, final int components) {
 
         // najde nejkratsi cestu z a do b, bez pouziti cest z bannedRoads
         // a, b jsou vrcholy vybrane cesty, samotna cesta jiz patri do banned roads, takze nenalezne trivialni cestu
@@ -74,26 +78,80 @@ public class AlgCycleRunnable implements Runnable {
 
         // existuje cesta?
         if (path.isEmpty()) {
-            // cesta neexistuje, mame rez, poznacime si ho
-            // pokud nas nezajimaji rozpady pomoci mensiho mnozstvi cest, tak se nepoznacuji
-            if (!findOnlyAccurateDisconnection || bannedRoads.size() >= maxNumberOfRoadsToClose) {
-                Disconnection dis = new Disconnection(bannedRoads);
-                //disconnectionCollector.addDisconnection(dis);
-                disconnections.add(dis);
+            // neexistuje
+
+            /*
+             // register disconnection
+             Disconnection dis = new Disconnection(bannedRoads);
+             disconnections.add(dis);
+             */
+            final Graph g = new Multigraph(Road.class);
+
+            // add vertices
+            for (Node n : this.net.getNodes()) {
+                g.addVertex(n);
             }
 
-            // rekurzivni hledani rozpadu na vice komponent
-            if ((components + 1) < maxNumberOfComponents) {
-                final Set<Road> allowedRoads = new HashSet<>(net.getRoads());
-                allowedRoads.removeAll(bannedRoads);
+            // add roads
+            for (Road r : this.net.getRoads()) {
+                g.addEdge(r.getFirst_node(), r.getSecond_node(), r);
+            }
 
-                for (Iterator<Road> it = allowedRoads.iterator(); it.hasNext();) {
-                    final Road allowedRoad = it.next();
-                    theFindCyclesAlgorithm(bannedRoads, allowedRoad, components + 1);
+            // delete F roads - tedka v grafu nejsou zadne F hrany
+            for (Road r : bannedRoads) {
+                g.removeEdge(r);
+            }
+
+            // for each road in F - pridame jednu F hranu pro kazdy beh
+            for (Road r : bannedRoads) {
+                g.addEdge(r.getFirst_node(), r.getSecond_node(), r);
+
+                KruskalMinimumSpanningTree<Node, Road> st = new KruskalMinimumSpanningTree<>(g);
+
+                Set<Road> kostra = st.getEdgeSet();
+                
+                Net tempNet = new Net();
+                tempNet = this.net.clone();
+                tempNet.clearRoads();
+                
+                System.out.println(kostra.toString());
+                
+                // roads from spnning tree are given back
+                for (Road road1 : kostra) {
+                    tempNet.addRoad(road1);
+                    
+                    tempNet.getNode(road1.getFirst_node().getId()).addRoad(road1);
+                    tempNet.getNode(road1.getSecond_node().getId()).addRoad(road1);
                 }
-            }
+                                
+                
+                if (!tempNet.isInOneComponent()) {
+                    System.out.println("neeeenaslo");
+                    Disconnection dis = new Disconnection(bannedRoads);
+                    disconnections.add(dis);
+                } else {
+                    System.out.println("naslo");
+
+                    for (Road road_Tf : st.getEdgeSet()) {
+
+                        Set<Road> newBannedRoads = new HashSet<>(bannedRoads);
+                        newBannedRoads.add(road_Tf);
+
+                        theFindCyclesCutAlgorithm(bannedRoads, road_Tf, components);
+
+                    }
+
+                }
+                System.out.println("Road: " + road + ", banned: " + bannedRoads);
+                System.out.println("Kostra: " + st.getEdgeSet());
+                System.out.println();
+
+                g.removeEdge(r);
+                
+            } // end of for each road in F
 
         } else {
+
             // cesta existuje, rez zatim nemame
             // pro kazdou cestu na nejkratsi kruznici z a do b
             for (final Road roadInPath : path) {
@@ -104,9 +162,10 @@ public class AlgCycleRunnable implements Runnable {
                 // omezeni maximalniho poctu uzaviranych silnic
                 if ((newBannedRoads.size()) <= maxNumberOfRoadsToClose) {
                     // spustime algoritmus rekurzivne
-                    theFindCyclesAlgorithm(newBannedRoads, roadInPath, components);
+                    theFindCyclesCutAlgorithm(newBannedRoads, roadInPath, components);
                 }
             }
+
         }
     }
 
@@ -135,7 +194,7 @@ public class AlgCycleRunnable implements Runnable {
         NodeAndRoad previous;
         while (!recent.equals(source)) {
             previous = mapOfAncestors.get(recent);
-            
+
             listOfRoadsOnThePath.add(previous.getRoad());
             recent = previous.getNode();
         }
@@ -190,14 +249,14 @@ public class AlgCycleRunnable implements Runnable {
 
             queue.remove(u);
             visited.put(u, Boolean.TRUE);
-            
+
             for (final Road r : u.getRoads()) { // for (final Road r : roadToFor) { // 
-           
+
                 // skip closed and banned roads
                 if (bannedRoads.contains(r)) {
                     continue;
                 }
-                                
+
                 final Node v = r.getOppositeNode(u);
                 final int alt = distance.get(u) + 1; // accumulate shortest distance, dist[u] + dist_between(u, v)
                 if (alt < distance.get(v) && !visited.get(v)) {
@@ -211,3 +270,4 @@ public class AlgCycleRunnable implements Runnable {
         return previousRoad;
     }
 }
+

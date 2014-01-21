@@ -1,5 +1,6 @@
 package cz.muni.fi.closuresim;
 
+import java.util.Iterator;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.logging.Level;
@@ -8,16 +9,19 @@ import java.util.logging.Level;
  *
  * @author Tom
  */
-public class AlgorithmCycle implements Algorithm {
+public class AlgorithmCycleCut implements Algorithm {
 
+    private final int NUMBER_OF_THREADS = ExperimentSetup.USE_CPUs - 1; // one CPU for main thread
+    
     private final Net net;
     private final DisconnectionCollector disconnectionCollector;
+    
     private final int maxNumOfComponents;
     private final boolean findOnlyAccurateDisconnection;
-    private final int NUMBER_OF_THREADS = ExperimentSetup.USE_CPUs - 1; // one CPU for main thread
-    protected static final Queue<Road> queue = new ConcurrentLinkedQueue<>();
+    
+    protected static final Queue<Road> queueOfRoads = new ConcurrentLinkedQueue<>();
 
-    public AlgorithmCycle(Net net, DisconnectionCollector disconnectionCollector, final int maxNumOfComponents, final boolean findOnlyAccurateDisconnection) {
+    public AlgorithmCycleCut(Net net, DisconnectionCollector disconnectionCollector, final int maxNumOfComponents, final boolean findOnlyAccurateDisconnection) {
         this.net = net;
         this.disconnectionCollector = disconnectionCollector;
         this.maxNumOfComponents = maxNumOfComponents;
@@ -28,16 +32,15 @@ public class AlgorithmCycle implements Algorithm {
     public void start(final int maxClosedRoads) {
 
         // add all roads to the queue, threads are going to run over all roads in the queue
-        queue.addAll(net.getRoads());
-
+        queueOfRoads.addAll(net.getRoads());
 
         // inicialize runnables and threads
-        AlgCycleRunnable[] runnables = new AlgCycleRunnable[NUMBER_OF_THREADS];
+        AlgCycleCutRunnable[] runnables = new AlgCycleCutRunnable[NUMBER_OF_THREADS];
         Thread[] threads = new Thread[NUMBER_OF_THREADS];
 
         for (int i = 0; i < NUMBER_OF_THREADS; i++) {
             // inicialize runnable by specific algorithm modification
-            runnables[i] = new AlgCycleRunnable(net, disconnectionCollector, maxClosedRoads, maxNumOfComponents, findOnlyAccurateDisconnection);
+            runnables[i] = new AlgCycleCutRunnable(net, disconnectionCollector, maxClosedRoads, maxNumOfComponents, findOnlyAccurateDisconnection);
             // set thread to its runnable and name it
             threads[i] = new Thread(runnables[i]);
             threads[i].setName(Integer.toString(i));

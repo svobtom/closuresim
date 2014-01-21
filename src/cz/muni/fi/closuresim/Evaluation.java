@@ -10,20 +10,22 @@ import java.util.logging.Level;
  */
 public class Evaluation {
 
-    private static final int NUMBER_OF_THREADS = ExperimentSetup.USE_CPUs - 1; // one CPU for main thread
-    private Net net;
-    private DisconnectionCollector disconnectionCollector;
-    private DisconnectionCollector[] subCollectors;
-
+    private final int NUMBER_OF_THREADS = ExperimentSetup.USE_CPUs - 1; // one CPU for main thread
+    private final Net net;
+    private final DisconnectionCollector disconnectionCollector;
+    private final DisconnectionCollector[] subCollectors;
+    
     public Evaluation(Net net, DisconnectionCollector dc) {
         this.net = net;
         this.disconnectionCollector = dc;
 
+        // create new subcollectors
         subCollectors = new DisconnectionCollector[NUMBER_OF_THREADS];
         for (int i = 0; i < NUMBER_OF_THREADS; i++) {
             subCollectors[i] = new DisconnectionCollector();
         }
 
+        // divide disconnections
         int num = 1;
         for (Iterator<Disconnection> it = this.disconnectionCollector.getDisconnections().iterator(); it.hasNext();) {
             Disconnection dis = it.next();
@@ -56,7 +58,7 @@ public class Evaluation {
             try {
                 threads[i].join();
             } catch (InterruptedException ex) {
-                ExperimentSetup.LOGGER.log(Level.SEVERE, null, ex);
+                ExperimentSetup.LOGGER.log(Level.SEVERE, "Error during waiting.", ex);
             }
         }
 

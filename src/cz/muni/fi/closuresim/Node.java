@@ -121,6 +121,13 @@ public class Node {
     public void setRoads(Set roads) {
         this.roads = roads;
     }
+    
+    /**
+     * Clear list of connected roads.
+     */
+    public void clearRoads() {
+        this.roads.clear();
+    }
 
     /**
      * Connect one road to the city.

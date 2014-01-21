@@ -226,7 +226,7 @@ public class Net {
                 //Node neighbour = it.next();
                 isInOneComponentRec(it.next());
             }
-            
+
         } // else return;
     }
 
@@ -376,6 +376,19 @@ public class Net {
          return 1;
          }
          */
+    }
 
-    }    
+    /**
+     * Remove all roads from net.
+     */
+    void clearRoads() {
+
+        // clear lists of roads in nodes
+        for (Node node : this.nodes) {
+            node.clearRoads();
+        }
+
+        // remove roads set
+        this.roads.clear();
+    }
 }

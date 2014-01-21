@@ -1,6 +1,7 @@
 package cz.muni.fi.closuresim;
 
 import java.util.Iterator;
+import java.util.logging.Level;
 
 /**
  *
@@ -8,8 +9,8 @@ import java.util.Iterator;
  */
 public class EvaluationRunnable implements Runnable {
 
-    private Net net;
-    protected DisconnectionCollector subCollector;
+    private final Net net;
+    private final DisconnectionCollector subCollector;
 
     public EvaluationRunnable(Net net, DisconnectionCollector subCollector) {
         this.net = net.clone();
@@ -33,9 +34,13 @@ public class EvaluationRunnable implements Runnable {
             }
 
             // evaluating
-            int numOfComp = net.getNumOfComponents();
+            final int numOfComp = net.getNumOfComponents();
+            if (numOfComp < 2) {
+                ExperimentSetup.LOGGER.log(Level.SEVERE, "In Disconnection collector was not disconnection.");
+            }
+            
             disconnection.setEvaluation(Valuation.COMPONENTS, numOfComp);
-            double variance = net.getValueOfBadness(numOfComp);
+            final double variance = net.getValueOfBadness(numOfComp);
             disconnection.setEvaluation(Valuation.VARIANCE, variance);
             //System.out.println(Thread.currentThread().getName() + ": Disconnection (" + disconnection.getRoadsNames() +") evaluated.");
 
