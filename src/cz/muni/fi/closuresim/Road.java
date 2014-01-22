@@ -21,6 +21,8 @@ public class Road {
     /** Atribute represents rideable of the road  */
     private boolean closed = false;
 
+    private int marking;
+    
     /**
      * Create new road.
      */
@@ -200,7 +202,7 @@ public class Road {
      * Return the opposite node of the road. If given node is the first node the method return second node, 
      * otherwise it return first node. 
      *  
-     * @param given node
+     * @param node given node
      * @return opposite node
      */
     public Node getOppositeNode(final Node node) {
@@ -210,5 +212,15 @@ public class Road {
             return this.first_node;
         }
     }
+
+    public int getMarking() {
+        return marking;
+    }
+
+    public void setMarking(final int marking) {
+        this.marking = marking;
+    }
+    
+    
 }
 

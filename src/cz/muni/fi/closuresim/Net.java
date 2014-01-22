@@ -391,4 +391,34 @@ public class Net {
         // remove roads set
         this.roads.clear();
     }
+/*
+    public boolean isAllRoadsConnected() {
+
+        for (Road r : roads) {
+            r.setMarking(0);
+        }
+
+        Road first = roads.iterator().next();
+        isAllRoadsConnectedRec(first);
+
+        for (Road r : roads) {
+            if (r.getMarking() == 0) {
+                return false;
+            }
+        }
+        return true;
+        
+    }
+
+    private void isAllRoadsConnectedRec(Road first) {
+        if (first.getMarking() == 0) {
+            first.setMarking(1);
+            for (Node node : first.) {
+                
+            }
+        }
+        
+        
+    }
+    */
 }

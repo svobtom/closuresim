@@ -106,33 +106,51 @@ public class AlgCycleCutRunnable implements Runnable {
             for (Road r : bannedRoads) {
                 g.addEdge(r.getFirst_node(), r.getSecond_node(), r);
 
+                //System.out.println("z " + bannedRoads);
+                //System.out.println("g " + g.edgeSet());
+                //System.out.println("");
+
                 KruskalMinimumSpanningTree<Node, Road> st = new KruskalMinimumSpanningTree<>(g);
 
+                // get road on the spanning tree/forest
                 Set<Road> kostra = st.getEdgeSet();
-                
-                Net tempNet = new Net();
-                tempNet = this.net.clone();
-                tempNet.clearRoads();
-                
-                System.out.println(kostra.toString());
-                
-                // roads from spnning tree are given back
+                //System.out.println("ko " + kostra.toString());
+
+                // zjistit, zda silnice na kostre tvori strom (a jsou obsazeny vsechny vrcholy)               
+                Net kostraNet = new Net();
+                kostraNet = this.net.clone();
+                kostraNet.clearRoads();
+
+                // roads from spanning tree are given back
                 for (Road road1 : kostra) {
-                    tempNet.addRoad(road1);
+                    // nastaveni cesty
+                    Road nR = new Road();
+                    nR.setId(road1.getId());
+                    nR.setName(road1.getName());
                     
-                    tempNet.getNode(road1.getFirst_node().getId()).addRoad(road1);
-                    tempNet.getNode(road1.getSecond_node().getId()).addRoad(road1);
+                    nR.setFirst_node(kostraNet.getNode(road1.getFirst_node().getId()));
+                    nR.setSecond_node(kostraNet.getNode(road1.getSecond_node().getId()));
+                    kostraNet.addRoad(nR);
+
+                    // pridani do seznamu na uzlech
+                    kostraNet.getNode(road1.getFirst_node().getId()).addRoad(nR);
+                    kostraNet.getNode(road1.getSecond_node().getId()).addRoad(nR);
+                    
                 }
-                                
-                
-                if (!tempNet.isInOneComponent()) {
-                    System.out.println("neeeenaslo");
+
+                if (!kostraNet.isInOneComponent()) {
+                    //System.out.println("kostra NEtvori strom ale les");
                     Disconnection dis = new Disconnection(bannedRoads);
                     disconnections.add(dis);
                 } else {
-                    System.out.println("naslo");
+                    //System.out.println("kostra tvori strom");
 
-                    for (Road road_Tf : st.getEdgeSet()) {
+                    for (Road road_Tf : kostra) {
+                        
+                        // T-f proto preskocime
+                        if (road_Tf.equals(r)) {
+                            continue;
+                        }
 
                         Set<Road> newBannedRoads = new HashSet<>(bannedRoads);
                         newBannedRoads.add(road_Tf);
@@ -140,19 +158,19 @@ public class AlgCycleCutRunnable implements Runnable {
                         theFindCyclesCutAlgorithm(bannedRoads, road_Tf, components);
 
                     }
-
                 }
-                System.out.println("Road: " + road + ", banned: " + bannedRoads);
-                System.out.println("Kostra: " + st.getEdgeSet());
-                System.out.println();
+
+                //System.out.println("Road: " + road + ", banned: " + bannedRoads);
+                //System.out.println("Kostra: " + st.getEdgeSet());
+                //System.out.println();
 
                 g.removeEdge(r);
-                
+
             } // end of for each road in F
 
         } else {
 
-            // cesta existuje, rez zatim nemame
+            // cesta existuje
             // pro kazdou cestu na nejkratsi kruznici z a do b
             for (final Road roadInPath : path) {
                 // vytvorime nove zakazane cesty, tak ze k jiz soucasnym zakazanym pridame cesty, ktere jsou na prave nalezene kruznici
@@ -270,4 +288,3 @@ public class AlgCycleCutRunnable implements Runnable {
         return previousRoad;
     }
 }
-
