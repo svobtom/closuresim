@@ -37,18 +37,20 @@ public class AlgCycleRunnable implements Runnable {
 
         // vlakna paralelne provedou algoritmus pocinaje od kazde cesty
         while (!AlgorithmCycle.queue.isEmpty()) {
+            // vezme se dalsi cesta z fronty
             final Road roadToStart = AlgorithmCycle.queue.poll();
             if (roadToStart != null) {
                 // get the road in the cloned net
                 final Road cRoadToStart = this.net.getRoad(roadToStart.getId());
 
+                // vytvoreni mnoziny R - bannedRoads
                 final Set<Road> bannedRoads = new HashSet<>();
                 bannedRoads.add(cRoadToStart);
 
                 // 1. Zvolim hranu e (jednu vybranou cestu)
                 theFindCyclesAlgorithm(bannedRoads, cRoadToStart, 1);
 
-                // add found disconnections by one run of the algorithm
+                // add found disconnections by one run of the algorithm to the disconnection collector
                 final int numFoundDis = this.disconnections.size();
                 this.disconnectionCollector.addDisconnections(this.disconnections);
                 this.disconnections.clear();
@@ -68,7 +70,7 @@ public class AlgCycleRunnable implements Runnable {
     private void theFindCyclesAlgorithm(final Set<Road> bannedRoads, final Road road, final int components) {
 
         // najde nejkratsi cestu z a do b, bez pouziti cest z bannedRoads
-        // a, b jsou vrcholy vybrane cesty, samotna cesta jiz patri do banned roads, takze nenalezne trivialni cestu
+        // a, b jsou oba vrcholy vybrane cesty, samotna cesta jiz patri do bannedRoads, takze nenalezne trivialni cestu
         // obsahujici pouze prave tuto cestu z a do b
         final List<Road> path = findShortestPath(road.getFirst_node(), road.getSecond_node(), bannedRoads);
 
@@ -87,6 +89,7 @@ public class AlgCycleRunnable implements Runnable {
                 final Set<Road> allowedRoads = new HashSet<>(net.getRoads());
                 allowedRoads.removeAll(bannedRoads);
 
+                // pro kazdou zatim jeste povolenou cestu
                 for (Iterator<Road> it = allowedRoads.iterator(); it.hasNext();) {
                     final Road allowedRoad = it.next();
                     theFindCyclesAlgorithm(bannedRoads, allowedRoad, components + 1);
@@ -95,14 +98,16 @@ public class AlgCycleRunnable implements Runnable {
 
         } else {
             // cesta existuje, rez zatim nemame
-            // pro kazdou cestu na nejkratsi kruznici z a do b
-            for (final Road roadInPath : path) {
-                // vytvorime nove zakazane cesty, tak ze k jiz soucasnym zakazanym pridame cesty, ktere jsou na prave nalezene kruznici
-                Set<Road> newBannedRoads = new HashSet<>(bannedRoads);
-                newBannedRoads.add(roadInPath);
 
-                // omezeni maximalniho poctu uzaviranych silnic
-                if ((newBannedRoads.size()) <= maxNumberOfRoadsToClose) {
+            // omezeni maximalniho poctu uzaviranych silnic
+            if ((bannedRoads.size()) < maxNumberOfRoadsToClose) {
+
+                // pro kazdou cestu na nejkratsi kruznici z a do b
+                for (final Road roadInPath : path) {
+                    // vytvorime nove zakazane cesty, tak ze k jiz soucasnym zakazanym pridame cesty, ktere jsou na prave nalezene kruznici
+                    Set<Road> newBannedRoads = new HashSet<>(bannedRoads);
+                    newBannedRoads.add(roadInPath);
+
                     // spustime algoritmus rekurzivne
                     theFindCyclesAlgorithm(newBannedRoads, roadInPath, components);
                 }
@@ -120,6 +125,7 @@ public class AlgCycleRunnable implements Runnable {
      */
     private List<Road> findShortestPath(final Node source, final Node target, final Set<Road> bannedRoads) {
 
+        // vysledna cesta, zatim prazdna
         final List<Road> listOfRoadsOnThePath = new LinkedList<>();
 
         // nalezeni nejkratsi cestu z a do b bez pouziti cest v bannedRoads
@@ -135,7 +141,7 @@ public class AlgCycleRunnable implements Runnable {
         NodeAndRoad previous;
         while (!recent.equals(source)) {
             previous = mapOfAncestors.get(recent);
-            
+
             listOfRoadsOnThePath.add(previous.getRoad());
             recent = previous.getNode();
         }
@@ -190,14 +196,14 @@ public class AlgCycleRunnable implements Runnable {
 
             queue.remove(u);
             visited.put(u, Boolean.TRUE);
-            
-            for (final Road r : u.getRoads()) { // for (final Road r : roadToFor) { // 
-           
-                // skip closed and banned roads
+
+            for (final Road r : u.getRoads()) {
+
+                // skip banned roads
                 if (bannedRoads.contains(r)) {
                     continue;
                 }
-                                
+
                 final Node v = r.getOppositeNode(u);
                 final int alt = distance.get(u) + 1; // accumulate shortest distance, dist[u] + dist_between(u, v)
                 if (alt < distance.get(v) && !visited.get(v)) {
@@ -209,5 +215,6 @@ public class AlgCycleRunnable implements Runnable {
             } // end for
         } // end while
         return previousRoad;
+
     }
 }

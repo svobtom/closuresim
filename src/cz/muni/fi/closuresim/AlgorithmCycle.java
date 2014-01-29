@@ -30,6 +30,10 @@ public class AlgorithmCycle implements Algorithm {
         // add all roads to the queue, threads are going to run over all roads in the queue
         queue.addAll(net.getRoads());
 
+        // check number of threads
+        if (NUMBER_OF_THREADS < 1) {
+            ExperimentSetup.LOGGER.log(Level.SEVERE, "Number of threads must be at least 1.");
+        }
 
         // inicialize runnables and threads
         AlgCycleRunnable[] runnables = new AlgCycleRunnable[NUMBER_OF_THREADS];
