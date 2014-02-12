@@ -9,6 +9,7 @@ import java.util.Set;
  * @author Tom
  */
 public class Road {
+    
     private int id;
     private Node first_node;
     private Node second_node;
@@ -221,6 +222,4 @@ public class Road {
         this.marking = marking;
     }
     
-    
 }
-

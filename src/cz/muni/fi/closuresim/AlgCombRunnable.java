@@ -64,9 +64,9 @@ public class AlgCombRunnable implements Runnable {
             List<Road> listOfroadsSourceNet = iCombinatoricsVector.getVector();
 
 
-            if (disconnectionCollector.make1RDisconnection(listOfroadsSourceNet)) { // || disconnectionCollector.make2RDisconnection(listOfroadsSourceNet) || !net.distanceBetweenRoadsIsAtLeast(2, listOfroadsSourceNet)
-                continue;
-            }
+            //if (disconnectionCollector.make1RDisconnection(listOfroadsSourceNet)) { // || disconnectionCollector.make2RDisconnection(listOfroadsSourceNet) || !net.distanceBetweenRoadsIsAtLeast(2, listOfroadsSourceNet)
+            //    continue;
+            //}
 
             /*
             if (minDistanceOfClosedRoads != 0 && !net.distanceBetweenRoadsIsAtLeast(minDistanceOfClosedRoads, listOfroadsSourceNet)) {

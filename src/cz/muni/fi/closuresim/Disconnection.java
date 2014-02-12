@@ -14,13 +14,14 @@ import java.util.Map;
 public class Disconnection {
 
     /**
-     * Roads which was closed
+     * Roads which was closed in the disconnection.
      */
-    private Set<Road> roads;
+    private final Set<Road> roads;
+
     /**
-     * Map of valuations of the disconnection
+     * Map of valuations which can be assigned to the disconnection.
      */
-    private Map<Valuation, Number> valuation = new HashMap<>();
+    private final Map<Valuation, Number> valuation = new HashMap<>();
 
     public Disconnection(Set<Road> closedRoads) {
         roads = new HashSet<>();
@@ -28,7 +29,7 @@ public class Disconnection {
     }
 
     public Disconnection(Collection<Road> closedRoads) {
-        roads = new HashSet<>();
+        roads = new  HashSet<>();
         roads.addAll(closedRoads);
     }
 
@@ -59,7 +60,7 @@ public class Disconnection {
     }
 
     /**
-     * Return names of roads in disconnection separated by comma
+     * Return names of roads in disconnection separated by semicolon
      *
      * @return
      */
@@ -81,6 +82,15 @@ public class Disconnection {
 
     public int getNumClosedRoads() {
         return roads.size();
+    }
+    
+    /**
+     * Get number of copmponents. 
+     * 
+     * @return number of components.
+     */
+    public int getNumOfComponents() {
+        return (int) this.valuation.get(Valuation.COMPONENTS);
     }
 
     @Override
@@ -118,4 +128,10 @@ public class Disconnection {
     public Number getEvaluation(Valuation v) {
         return this.valuation.get(v);
     }
+
+    @Override
+    public String toString() {
+        return "Disconnection{" + "roads=" + roads + "}";
+    }
+
 }

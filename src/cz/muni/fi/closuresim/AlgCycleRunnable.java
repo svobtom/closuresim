@@ -16,7 +16,7 @@ import java.util.logging.Level;
 public class AlgCycleRunnable implements Runnable {
 
     private final Net net;
-    private final List<Disconnection> disconnections;
+    private final Set<Disconnection> disconnections;
     private final DisconnectionCollector disconnectionCollector;
     private final int maxNumberOfRoadsToClose;
     private final int maxNumberOfComponents;
@@ -24,7 +24,7 @@ public class AlgCycleRunnable implements Runnable {
 
     public AlgCycleRunnable(Net net, DisconnectionCollector dc, final int roads, final int comp, final boolean findOnlyAccurateDisconnection) {
         this.net = net.clone();
-        this.disconnections = new LinkedList<>();
+        this.disconnections = new HashSet<>();
         this.disconnectionCollector = dc;
         this.maxNumberOfRoadsToClose = roads;
         this.maxNumberOfComponents = comp;
@@ -73,13 +73,25 @@ public class AlgCycleRunnable implements Runnable {
         // a, b jsou oba vrcholy vybrane cesty, samotna cesta jiz patri do bannedRoads, takze nenalezne trivialni cestu
         // obsahujici pouze prave tuto cestu z a do b
         final List<Road> path = findShortestPath(road.getFirst_node(), road.getSecond_node(), bannedRoads);
-
+        // zamenit za for pres vsechny bannedRoads
+        // nove najit nejkratsi cestu z banndroad, to se hodi na vystup, budu pridavat ke stavajici mnozine, pres vsechny cesty jednu hranu z nich
+        
         // existuje cesta?
         if (path.isEmpty()) {
             // cesta neexistuje, mame rez, poznacime si ho
             // pokud nas nezajimaji rozpady pomoci mensiho mnozstvi cest, tak se nepoznacuji
             if (!findOnlyAccurateDisconnection || bannedRoads.size() >= maxNumberOfRoadsToClose) {
                 Disconnection dis = new Disconnection(bannedRoads);
+                
+                Set<Road> testSet = new HashSet<>();
+                testSet.add(this.net.getRoad(24));
+                testSet.add(this.net.getRoad(26));
+                testSet.add(this.net.getRoad(25));                
+                Disconnection testDis = new Disconnection(testSet);                
+                if (dis.equals(testDis)) {
+                    System.out.println("For debug");
+                }
+                
                 //disconnectionCollector.addDisconnection(dis);
                 disconnections.add(dis);
             }
@@ -102,10 +114,17 @@ public class AlgCycleRunnable implements Runnable {
             // omezeni maximalniho poctu uzaviranych silnic
             if ((bannedRoads.size()) < maxNumberOfRoadsToClose) {
 
+                //path.add(road);
+                
                 // pro kazdou cestu na nejkratsi kruznici z a do b
                 for (final Road roadInPath : path) {
                     // vytvorime nove zakazane cesty, tak ze k jiz soucasnym zakazanym pridame cesty, ktere jsou na prave nalezene kruznici
                     Set<Road> newBannedRoads = new HashSet<>(bannedRoads);
+                    
+                    if (bannedRoads.contains(this.net.getRoad(25)) && bannedRoads.contains(this.net.getRoad(24)) &&  roadInPath.equals(this.net.getRoad(26))) {
+                        System.out.println("For debug, road");
+                    }
+                    
                     newBannedRoads.add(roadInPath);
 
                     // spustime algoritmus rekurzivne

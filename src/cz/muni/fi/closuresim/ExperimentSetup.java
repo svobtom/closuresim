@@ -136,6 +136,9 @@ public class ExperimentSetup {
         System.out.println("------------------------------------------------------------------");
         LOGGER.addTime("endOfAlgorithm");
 
+        // test founded disconnections
+        //disconnectionCollector.testPowerSet(true);
+        
         // evaluation of the disconnection
         Evaluation evaluation = new Evaluation(net, disconnectionCollector);
         System.out.println();
@@ -151,7 +154,9 @@ public class ExperimentSetup {
         disconnectionCollector.sort(Valuation.VARIANCE);
         LOGGER.addTime("endOfSorting");
 
-        // display and store disconnections to files
+        // display disconnections
+        disconnectionCollector.displayDetailStatistics();
+        System.out.println();
         disconnectionCollector.displayStatistics();
 
         ResultWriter resultWriter = new ResultWriter(disconnectionCollector, outputDirectory);
