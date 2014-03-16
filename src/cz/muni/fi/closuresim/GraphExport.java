@@ -29,6 +29,7 @@ import java.util.logging.Level;
 public class GraphExport {
 
     private final String filename = "source-net.graphml";
+    private final String coloredRoadsFileName = "colored-roads.graphml";
     private final File outputDirectory;
 
     public GraphExport(final File outputDirectory) {
@@ -50,9 +51,9 @@ public class GraphExport {
             Vertex newVertex = graph.addVertex("n" + node.getId());
             newVertex.setProperty("label", node.getName());
 
-            newVertex.setProperty("r", 240);
-            newVertex.setProperty("g", 60);
-            newVertex.setProperty("b", 240);
+            newVertex.setProperty("r", 34);
+            newVertex.setProperty("g", 139);
+            newVertex.setProperty("b", 34);
 
             mapa.put(node.getId(), newVertex);
 
@@ -67,10 +68,9 @@ public class GraphExport {
 
             Edge e = graph.addEdge("e" + road.getId(), a, b, road.getName());
 
-            e.setProperty("weight", road.getId() % 2 == 0 ? 1 : 2);
-            e.setProperty("r", 255);
-            e.setProperty("g", 0);
-            e.setProperty("b", 0);
+            e.setProperty("r", 30);
+            e.setProperty("g", 144);
+            e.setProperty("b", 255);
         }
 
         try {
@@ -83,10 +83,10 @@ public class GraphExport {
 
     public void exportDisconnections(Net net, DisconnectionCollector dc, final int dToAnalyze) {
 
-        for (int j = 1; j <= dc.getMaxNumberOfClosedRoads(); j++) {
+        for (int closedRoads = 1; closedRoads <= dc.getMaxNumberOfClosedRoads(); closedRoads++) {
 
             int number = 1;
-            for (Disconnection disconnection : dc.getDisconnections(j)) {
+            for (Disconnection disconnection : dc.getDisconnections(closedRoads)) {
 
                 if (number > dToAnalyze) {
                     break;
@@ -94,7 +94,7 @@ public class GraphExport {
 
                 // create new graph
                 Graph graph = new TinkerGraph();
-                
+
                 // mapping new vertex to integer, useful for creating edges
                 Map<Integer, Vertex> mapa = new HashMap<>(net.getNodes().size());
 
@@ -112,8 +112,7 @@ public class GraphExport {
                 net.getNumOfComponents();
 
                 // create vertices
-                for (Iterator<Node> it = net.getNodes().iterator();
-                        it.hasNext();) {
+                for (Iterator<Node> it = net.getNodes().iterator(); it.hasNext();) {
                     Node node = it.next();
 
                     Vertex newVertex = graph.addVertex("n" + node.getId());
@@ -144,9 +143,9 @@ public class GraphExport {
                 }
 
                 try {
-                    File file = new File(outputDirectory, Integer.toString(j));
+                    File file = new File(outputDirectory, Integer.toString(closedRoads));
                     file.mkdir();
-                    
+
                     GraphMLWriter.outputGraph(graph, file + File.separator + "disconnection-" + number + ".graphml");
 
                     // replace graph from directed to undirected
@@ -155,7 +154,7 @@ public class GraphExport {
                     String content = new String(Files.readAllBytes(path), charset);
                     content = content.replaceAll("edgedefault=\"directed\"", "edgedefault=\"undirected\"");
                     Files.write(path, content.getBytes(charset));
-                    
+
                     number++;
 
                 } catch (IOException ex) {
@@ -243,5 +242,46 @@ public class GraphExport {
         }
 
         throw new IllegalArgumentException("No such rgb part color");
+    }
+
+    public void exportColoredRoads(Net net, Map<Road, Integer> roadsStatistics) {
+
+        // create new graph
+        Graph graph = new TinkerGraph();
+
+        // mapping new vertex to integer, useful for creating edges
+        Map<Integer, Vertex> mapa = new HashMap<>(net.getNodes().size());
+        
+        for (Node node : net.getNodes()) {
+            Vertex newVertex = graph.addVertex("n" + node.getId());
+            newVertex.setProperty("label", node.getName());
+
+            newVertex.setProperty("r", 100);
+            newVertex.setProperty("g", 100);
+            newVertex.setProperty("b", 100);
+            
+            newVertex.setProperty("lat", node.getLat());
+            newVertex.setProperty("lng", node.getLng());
+
+            mapa.put(node.getId(), newVertex);
+        }
+        for (Road road : net.getRoads()) {
+            Vertex a = mapa.get(road.getFirst_node().getId());
+            Vertex b = mapa.get(road.getSecond_node().getId());
+
+            Edge e = graph.addEdge("e" + road.getId(), a, b, road.getName());
+
+            e.setProperty("r", 30);
+            e.setProperty("g", 144);
+            e.setProperty("b", 255);
+            e.setProperty("weight", roadsStatistics.get(road));
+        }
+
+        try {
+            GraphMLWriter.outputGraph(graph, outputDirectory + File.separator + this.coloredRoadsFileName);
+        } catch (IOException ex) {
+            ExperimentSetup.LOGGER.log(Level.SEVERE, null, ex);
+        }
+
     }
 }

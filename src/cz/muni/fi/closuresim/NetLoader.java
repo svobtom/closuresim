@@ -2,9 +2,11 @@ package cz.muni.fi.closuresim;
 
 import java.io.*;
 import java.nio.charset.Charset;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.StringTokenizer;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -19,7 +21,7 @@ public class NetLoader {
     /**
      * New loaded net
      */
-    private Net net;
+    final private Net net;
 
     public NetLoader() {
         net = new Net();
@@ -161,7 +163,7 @@ public class NetLoader {
     }
 
     /**
-     * 
+     *
      * @return number of nodes
      */
     public int getNumOfLoadedNodes() {
@@ -169,7 +171,7 @@ public class NetLoader {
     }
 
     /**
-     * 
+     *
      * @return number of roads
      */
     public int getNumOfLoadedRoads() {
@@ -206,7 +208,7 @@ public class NetLoader {
 
     /**
      * Read CDV format file to get nodes.
-     * 
+     *
      * @param fileName name of the file
      * @param nodes
      */
@@ -248,10 +250,10 @@ public class NetLoader {
 
     /**
      * Read CDV file to get information about roads.
-     * 
+     *
      * @param fileName
      * @param nodes
-     * @param roads 
+     * @param roads
      */
     private void readRoads(final String fileName, final List<Node> nodes, List<Road> roads) {
         try {
@@ -293,11 +295,9 @@ public class NetLoader {
                             //System.out.println(" (" + roadsString + ") === ");
                         }
 
-
                         // for (int j = 0; j < roads_elements.length; j++) {
                         //String string = roads_elements[j];
                         //System.out.println(" (" + string + ") ");
-
                         //String[] oneRoad = string.split(";");
                         String[] oneRoad = roadsString.split(";");
 
@@ -334,9 +334,7 @@ public class NetLoader {
                         }
 
                         //}
-
                     }
-
 
                     //String[] roads_elements = elements[1].split(" ");
                 }
@@ -409,6 +407,36 @@ public class NetLoader {
 
         } catch (IOException ex) {
             Logger.getLogger(NetLoader.class.getName()).log(Level.SEVERE, null, ex);
+        }
+
+    }
+
+    public void loadCoordinates(String fileName) {
+        try {
+            InputStream fis = new FileInputStream(fileName);
+            BufferedReader br = new BufferedReader(new InputStreamReader(fis, Charset.forName("UTF-8")));
+
+            String line;
+            while ((line = br.readLine()) != null) {
+
+                String[] elements = line.split(";");
+
+                if (elements.length < 2) {
+                    ExperimentSetup.LOGGER.log(Level.SEVERE, "loading coordinates - line is too short");
+                }
+
+                String name = elements[0];
+                String lat = elements[1];
+                String lng = elements[2];
+                
+                this.net.getNode(name).setLat(Double.parseDouble(lat));
+                this.net.getNode(name).setLng(Double.parseDouble(lng));
+
+            }
+        } catch (FileNotFoundException ex) {
+            ExperimentSetup.LOGGER.log(Level.SEVERE, "File with coordinates not found.", ex);
+        } catch (IOException ex) {
+            ExperimentSetup.LOGGER.log(Level.SEVERE, "IO exception occur.", ex);
         }
 
     }

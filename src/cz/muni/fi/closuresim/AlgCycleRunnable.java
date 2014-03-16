@@ -10,6 +10,7 @@ import java.util.Set;
 import java.util.logging.Level;
 
 /**
+ * Body of the cycle algorithm.
  *
  * @author Tom
  */
@@ -35,20 +36,20 @@ public class AlgCycleRunnable implements Runnable {
     public void run() {
         ExperimentSetup.LOGGER.log(Level.INFO, "Thread {0} started.", Thread.currentThread().getName());
 
-        // vlakna paralelne provedou algoritmus pocinaje od kazde cesty
+        // threads do the algorithm parallel starting from each road
         while (!AlgorithmCycle.queue.isEmpty()) {
-            // vezme se dalsi cesta z fronty
+            // get the next road from the queue
             final Road roadToStart = AlgorithmCycle.queue.poll();
             if (roadToStart != null) {
                 // get the road in the cloned net
                 final Road cRoadToStart = this.net.getRoad(roadToStart.getId());
 
-                // vytvoreni mnoziny R - bannedRoads
+                // create the R set - bannedRoads
                 final Set<Road> bannedRoads = new HashSet<>();
                 bannedRoads.add(cRoadToStart);
 
-                // 1. Zvolim hranu e (jednu vybranou cestu)
-                theFindCyclesAlgorithm(bannedRoads, cRoadToStart, 1);
+                // 1. choosing edge e
+                theFindCyclesAlgorithm(bannedRoads, cRoadToStart, 1, false);
 
                 // add found disconnections by one run of the algorithm to the disconnection collector
                 final int numFoundDis = this.disconnections.size();
@@ -62,100 +63,125 @@ public class AlgCycleRunnable implements Runnable {
     }
 
     /**
-     * Do the algorithm.
+     * The algorithm itself.
      *
      * @param bannedRoads set of banned roads
      * @param road road which was chosen in the cycle
      */
-    private void theFindCyclesAlgorithm(final Set<Road> bannedRoads, final Road road, final int components) {
+    private void theFindCyclesAlgorithm(final Set<Road> bannedRoads, final Road road, final int components, boolean recComp) {
 
-        // najde nejkratsi cestu z a do b, bez pouziti cest z bannedRoads
-        // a, b jsou oba vrcholy vybrane cesty, samotna cesta jiz patri do bannedRoads, takze nenalezne trivialni cestu
-        // obsahujici pouze prave tuto cestu z a do b
-        final List<Road> path = findShortestPath(road.getFirst_node(), road.getSecond_node(), bannedRoads);
-        // zamenit za for pres vsechny bannedRoads
-        // nove najit nejkratsi cestu z banndroad, to se hodi na vystup, budu pridavat ke stavajici mnozine, pres vsechny cesty jednu hranu z nich
-        
-        // existuje cesta?
+        /*
+         // find the shortest path from A to B without use banned roads
+         // A, B are verticles of chosen road, this road belongs to banned roads
+         // trivial path (A, B) isn't found        
+         //List<Road> path = findShortestPath(road.getFirst_node(), road.getSecond_node(), bannedRoads); // earlier solution
+         // zamenit za for pres vsechny bannedRoads
+         // nove najit nejkratsi cestu z banndroad, to se hodi na vystup, budu pridavat ke stavajici mnozine, pres vsechny cesty jednu hranu z nich
+         */
+        // find the shortest cycle passing thru just one road from banned roads and avoid the others 
+        List<Road> path = new LinkedList<>();
+
+        // if not go recursively to more components
+        if (!recComp) {
+            int minLength = Integer.MAX_VALUE;
+            for (Road chosenRoad : bannedRoads) {
+                final List<Road> tempPath;
+                tempPath = findShortestPath(chosenRoad.getFirst_node(), chosenRoad.getSecond_node(), bannedRoads);
+
+                // set the shortest cycle
+                if (!tempPath.isEmpty() && tempPath.size() <= minLength) {
+                    path = tempPath;
+                    minLength = tempPath.size();
+
+                }
+            }
+        } else {
+            path = findShortestPath(road.getFirst_node(), road.getSecond_node(), bannedRoads);
+        }
+
+        // Does the path exist?
         if (path.isEmpty()) {
-            // cesta neexistuje, mame rez, poznacime si ho
-            // pokud nas nezajimaji rozpady pomoci mensiho mnozstvi cest, tak se nepoznacuji
+            // The path doesn't exist. We have cut. Put it down
+            // if we don't want disconnection by fewer roads, skip putting down 
             if (!findOnlyAccurateDisconnection || bannedRoads.size() >= maxNumberOfRoadsToClose) {
                 Disconnection dis = new Disconnection(bannedRoads);
-                
-                Set<Road> testSet = new HashSet<>();
-                testSet.add(this.net.getRoad(24));
-                testSet.add(this.net.getRoad(26));
-                testSet.add(this.net.getRoad(25));                
-                Disconnection testDis = new Disconnection(testSet);                
-                if (dis.equals(testDis)) {
-                    System.out.println("For debug");
-                }
-                
+
+                /*
+                 // only for testing
+                 Set<Road> testSet = new HashSet<>();
+                 testSet.add(this.net.getRoad(24));
+                 testSet.add(this.net.getRoad(26));
+                 testSet.add(this.net.getRoad(25));
+                 Disconnection testDis = new Disconnection(testSet);
+                 if (dis.equals(testDis)) {
+                 System.out.println("For debug");
+                 }
+                 */
                 //disconnectionCollector.addDisconnection(dis);
                 disconnections.add(dis);
             }
 
-            // rekurzivni hledani rozpadu na vice komponent
+            // recursive finding disconnections to more components
             if ((components + 1) < maxNumberOfComponents) {
                 final Set<Road> allowedRoads = new HashSet<>(net.getRoads());
                 allowedRoads.removeAll(bannedRoads);
 
-                // pro kazdou zatim jeste povolenou cestu
+                // for every recently not banned road
                 for (Iterator<Road> it = allowedRoads.iterator(); it.hasNext();) {
                     final Road allowedRoad = it.next();
-                    theFindCyclesAlgorithm(bannedRoads, allowedRoad, components + 1);
+                    theFindCyclesAlgorithm(bannedRoads, allowedRoad, components + 1, true);
                 }
             }
 
         } else {
-            // cesta existuje, rez zatim nemame
+            // The path exists. We haven't got the cut.
 
-            // omezeni maximalniho poctu uzaviranych silnic
+            // limit maximal number of closed roads
             if ((bannedRoads.size()) < maxNumberOfRoadsToClose) {
 
-                //path.add(road);
-                
-                // pro kazdou cestu na nejkratsi kruznici z a do b
+                // for every road on the shortest cycle (from A to B)
                 for (final Road roadInPath : path) {
                     // vytvorime nove zakazane cesty, tak ze k jiz soucasnym zakazanym pridame cesty, ktere jsou na prave nalezene kruznici
+                    // create new banned roads (add roads on the found cycle to recently banned roads)
                     Set<Road> newBannedRoads = new HashSet<>(bannedRoads);
-                    
-                    if (bannedRoads.contains(this.net.getRoad(25)) && bannedRoads.contains(this.net.getRoad(24)) &&  roadInPath.equals(this.net.getRoad(26))) {
-                        System.out.println("For debug, road");
-                    }
-                    
                     newBannedRoads.add(roadInPath);
 
-                    // spustime algoritmus rekurzivne
-                    theFindCyclesAlgorithm(newBannedRoads, roadInPath, components);
+                    /*
+                     // only for testing
+                     if (bannedRoads.contains(this.net.getRoad(25)) && bannedRoads.contains(this.net.getRoad(24)) && roadInPath.equals(this.net.getRoad(26))) {
+                     System.out.println("For debug, road");
+                     }
+                     */
+                    //  run the algorithm recursively
+                    theFindCyclesAlgorithm(newBannedRoads, roadInPath, components, false);
                 }
             }
         }
     }
 
     /**
-     * Find shortest path using dijkstra algorithm.
+     * Find shortest path between specified nodes avoiding banned roads.
      *
      * @param source source node
      * @param target target node
-     * @param bannedRoads set of roads which are banned/closed
-     * @return List<Road> list of roads on the shortest path
+     * @param bannedRoads set of roads which are banned
+     * @return List<Road> list of roads on the shortest path, if the path
+     * doesn't exist the empty list is returned
      */
     private List<Road> findShortestPath(final Node source, final Node target, final Set<Road> bannedRoads) {
 
-        // vysledna cesta, zatim prazdna
+        // path to return, empty yet
         final List<Road> listOfRoadsOnThePath = new LinkedList<>();
 
-        // nalezeni nejkratsi cestu z a do b bez pouziti cest v bannedRoads
+        // get map of ancestors for reconstruction path from source to target 
         final Map<Node, NodeAndRoad> mapOfAncestors = dijkstra(source, target, bannedRoads);
 
-        // cesta neexistuje
+        // road doesn't exist
         if (!mapOfAncestors.containsKey(target)) {
             return listOfRoadsOnThePath;
         }
 
-        // rekonstruuj nalezenou nejkratsi cestu z mapy predchudcu
+        // reconstruction path from source to target from map
         Node recent = target;
         NodeAndRoad previous;
         while (!recent.equals(source)) {
@@ -169,18 +195,17 @@ public class AlgCycleRunnable implements Runnable {
     }
 
     /**
-     * Dijkstra algorithm.
+     * Dijkstra algorithm modified to avoid banned roads.
      *
      * @param source start node
      * @param target target node
-     * @param bannedRoads set of roads which are banned on the returned path
+     * @param bannedRoads set of roads which are banned on the found path
      * @return map of nodes and its ancestors on the optimal path
      */
     private Map<Node, NodeAndRoad> dijkstra(final Node source, final Node target, final Set<Road> bannedRoads) {
         final Map<Node, Integer> distance = new HashMap<>();
         final Map<Node, Boolean> visited = new HashMap<>();
         final Map<Node, NodeAndRoad> previousRoad = new HashMap<>(); // previous node and road in the best path
-        //Map<Node, Node> previous = new HashMap<>(); // previous node in the best path
 
         // init nodes
         for (final Node node : net.getNodes()) {
@@ -191,7 +216,7 @@ public class AlgCycleRunnable implements Runnable {
         // start with the source node
         distance.put(source, 0);
 
-        final Set<Node> queue = new HashSet<>(); // final List<Node> queue = new LinkedList<>();
+        final Set<Node> queue = new HashSet<>();
         queue.add(source);
 
         while (!queue.isEmpty()) {

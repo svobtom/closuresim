@@ -16,6 +16,8 @@ public class Node {
     private String name;
     private int marking;
     private int numOfInhabitants;
+    private double lat;
+    private double lng;
 
     public Node() {
         roads = new HashSet<>();
@@ -180,4 +182,21 @@ public class Node {
         }
         return result;
     }
+
+    void setLat(double d) {
+        this.lat = d;
+    }
+
+    void setLng(double d) {
+        this.lng = d;
+    }
+
+    public double getLat() {
+        return lat;
+    }
+
+    public double getLng() {
+        return lng;
+    }
+    
 }

@@ -9,21 +9,26 @@ import org.paukov.combinatorics.*;
  */
 public class AlgorithmCombinatoric implements Algorithm {
 
-    private static final int NUMBER_OF_THREADS = ExperimentSetup.USE_CPUs;
+    private static final int NUMBER_OF_THREADS = ExperimentSetup.USE_CPUs - 1;
     
-    private Net net;
-    private DisconnectionCollector disconnectionCollector;
+    private final Net net;
+    private final DisconnectionCollector disconnectionCollector;
     private int minDistanceOfClosedRoads = 0;
+    
+    private String setStart;
+    private String setStop;
 
     public AlgorithmCombinatoric(Net net, DisconnectionCollector disconnectionCollector) {
         this.net = net;
         this.disconnectionCollector = disconnectionCollector;
     }
 
-    public AlgorithmCombinatoric(Net net, DisconnectionCollector disconnectionCollector, final int minDistanceOfClosedRoads) {
-        this.minDistanceOfClosedRoads = minDistanceOfClosedRoads;
+    public AlgorithmCombinatoric(Net net, DisconnectionCollector disconnectionCollector, String setStart, String setStop, final int minDistanceOfClosedRoads) {
         this.net = net;
         this.disconnectionCollector = disconnectionCollector;
+        this.minDistanceOfClosedRoads = minDistanceOfClosedRoads;
+        this.setStart = setStart;
+        this.setStop = setStop;
     }
 
     @Override
@@ -63,14 +68,6 @@ public class AlgorithmCombinatoric implements Algorithm {
             }
 
             /* check count of combination to one thread */
-
-            // get interval from properties
-            String setStart = null;
-            String setStop = null;
-            if (nClosedRoads > 1) {
-                setStart = ExperimentSetup.properties.getProperty("startOnCombinationsNo");
-                setStop = ExperimentSetup.properties.getProperty("stopOnCombinationsNo");
-            }
 
             int stopOnCombinationNo;
             if (setStop == null) {

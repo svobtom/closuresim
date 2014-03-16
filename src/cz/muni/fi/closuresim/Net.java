@@ -421,4 +421,19 @@ public class Net {
         
     }
     */
+
+    /**
+     * Get node by its name.
+     * 
+     * @param name
+     * @return node if found, el
+     */
+    public Node getNode(String name) {
+        for (Node node : this.nodes) {
+            if (node.getName().equals(name)) {
+                return node;
+            }
+        }
+        return null;
+    }
 }

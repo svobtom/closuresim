@@ -1,28 +1,31 @@
 package cz.muni.fi.closuresim;
 
-//import cz.muni.fi.closuresim.tools.NetReducer;
 import java.io.File;
 import java.util.Properties;
+//import cz.muni.fi.closuresim.tools.NetReducer;
 
 /**
+ * ExperimentSetup is main class of this project. There are defined variables
+ * which are used in entire application. It contains the main method.
  *
  * @author Tom
  */
 public class ExperimentSetup {
 
     /**
-     * Number of machine CPUs.
+     * Number of CPU cores of the (virtual) machine.
      */
     private static final int AVAILABLE_CPUs = Runtime.getRuntime().availableProcessors();
     /**
-     * Maximal number of CPU cores which application can use.
+     * Maximal number of CPU cores which application can use. Availible by all
+     * class of this package.
      */
     protected static int USE_CPUs;
     /**
      * Properties loaded from configuration file. Properties are availible by
      * all class of this package.
      */
-    protected static Properties properties;
+    private static Properties properties;
     /**
      * Output directory
      */
@@ -74,16 +77,22 @@ public class ExperimentSetup {
             net = loader.load(properties.getProperty("fileNodes"), properties.getProperty("fileEdges"));
         }
 
-        net.setName("Silniční síť");
+        net.setName("Road network");
         System.out.print("From files \"" + properties.getProperty("fileNodes") + "\" ");
         if (properties.getProperty("fileEdges") != null) {
             System.out.print("and " + properties.getProperty("fileEdges") + " ");
         }
         System.out.println("was loaded " + loader.getNumOfLoadedNodes() + " nodes and " + loader.getNumOfLoadedRoads() + " roads.");
 
-        //NetReducer nr = new NetReducer(net);
-        //nr.reduce(8);
+        if (properties.getProperty("fileCoordinates") != null) {
+            loader.loadCoordinates(properties.getProperty("fileCoordinates"));
+        }
 
+        /*
+         // For testing purpose to create subnet from source net
+         NetReducer nr = new NetReducer(net);
+         nr.reduce(8);
+         */
         // test if the net is connected at start
         if (net.isInOneComponent()) {
             System.out.println("The net is connected at the beginning.");
@@ -103,14 +112,28 @@ public class ExperimentSetup {
                 alg = new AlgorithmSimpleParallel(net, disconnectionCollector);
                 break;
             case "comb":
-                alg = new AlgorithmCombinatoric(net, disconnectionCollector, Integer.parseInt(properties.getProperty("minDistanceOfClosedRoads", "1")));
+                alg = new AlgorithmCombinatoric(
+                        net,
+                        disconnectionCollector,
+                        properties.getProperty("startOnCombinationsNo"),
+                        properties.getProperty("startOnCombinationsNo"),
+                        Integer.parseInt(properties.getProperty("minDistanceOfClosedRoads", "1")));
                 break;
             case "cycle":
                 alg = new AlgorithmCycle(
                         net,
                         disconnectionCollector,
                         Integer.parseInt(properties.getProperty("numberOfComponents", "2")),
-                        Boolean.parseBoolean(properties.getProperty("findOnlyAccurate")));
+                        Boolean.parseBoolean(properties.getProperty("findOnlyAccurate")),
+                        true);
+                break;
+            case "cycle-my":
+                alg = new AlgorithmCycle(
+                        net,
+                        disconnectionCollector,
+                        Integer.parseInt(properties.getProperty("numberOfComponents", "2")),
+                        Boolean.parseBoolean(properties.getProperty("findOnlyAccurate")),
+                        false);
                 break;
             case "cycle-cut":
                 alg = new AlgorithmCycleCut(
@@ -123,7 +146,18 @@ public class ExperimentSetup {
                 alg = new AlgorithmCycle2(net, disconnectionCollector, outputDirectory);
                 break;
             case "load":
-                alg = new AlgorithmLoadResults(net, disconnectionCollector, properties.getProperty("resultFile"));
+                alg = new AlgorithmLoadResults(
+                        net,
+                        disconnectionCollector,
+                        properties.getProperty("resultFile"),
+                        Integer.parseInt(ExperimentSetup.properties.getProperty("startOnCombinationsNo")),
+                        Integer.parseInt(ExperimentSetup.properties.getProperty("stopOnCombinationsNo")));
+                break;
+            case "test":
+                alg = new AlgorithmTest(
+                        net,
+                        disconnectionCollector
+                );
                 break;
             default:
                 throw new IllegalArgumentException("No such algorithm.");
@@ -136,9 +170,8 @@ public class ExperimentSetup {
         System.out.println("------------------------------------------------------------------");
         LOGGER.addTime("endOfAlgorithm");
 
-        // test founded disconnections
-        //disconnectionCollector.testPowerSet(true);
-        
+        // test found disconnections        
+        //disconnectionCollector.testPowerSet(true); // only for two components cut-sets
         // evaluation of the disconnection
         Evaluation evaluation = new Evaluation(net, disconnectionCollector);
         System.out.println();
@@ -150,7 +183,6 @@ public class ExperimentSetup {
         LOGGER.addTime("endOfEvaluation");
 
         // sorting of the evaluation
-        // 0 - number of components, 1 - variance
         disconnectionCollector.sort(Valuation.VARIANCE);
         LOGGER.addTime("endOfSorting");
 
@@ -166,12 +198,15 @@ public class ExperimentSetup {
         // let only specified number of the worst disconnections
         disconnectionCollector.letOnlyFirst(Integer.parseInt(properties.getProperty("numberToAnalyze")));
 
-        // do detail analyze
-        GraphExport ge = new GraphExport(outputDirectory); // vizualize
-        ge.export(net);
-        ge.exportDisconnections(net, disconnectionCollector, Integer.parseInt(properties.getProperty("numberToAnalyzeByRoad")));
-        System.out.println();
+        // do the detail analyze
+        GraphExport ge = new GraphExport(outputDirectory);
+        ge.export(net); // vizualize net
+        ge.exportDisconnections(net, disconnectionCollector, Integer.parseInt(properties.getProperty("numberToAnalyzeByRoad"))); // vizualize cut-sets
 
+        CutSetsAnalyzer csa = new CutSetsAnalyzer(net, disconnectionCollector, outputDirectory);
+        csa.doRoadsStatisctics();
+
+        System.out.println();
         LOGGER.endExperiment();
     } // end method main
 } // end class

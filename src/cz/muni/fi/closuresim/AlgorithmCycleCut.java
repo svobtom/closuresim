@@ -1,6 +1,5 @@
 package cz.muni.fi.closuresim;
 
-import java.util.Iterator;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.logging.Level;

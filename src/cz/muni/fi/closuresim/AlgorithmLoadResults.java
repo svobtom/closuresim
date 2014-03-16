@@ -12,33 +12,49 @@ import java.util.Set;
 import java.util.logging.Level;
 
 /**
+ * This algorithm loads disconnections from existing result file in output
+ * format of the application.
  *
  * @author Tom
  */
 class AlgorithmLoadResults implements Algorithm {
 
-    private Net net;
-    private DisconnectionCollector disconnectionCollector;
-    private String fileName;
+    private final Net net;
+    private final DisconnectionCollector disconnectionCollector;
+    private final String fileName;
+    private final int startResultNo;
+    private final int stopResultNo;
 
-    public AlgorithmLoadResults(Net net, DisconnectionCollector disconnectionCollector, String fileName) {
+    /**
+     * Constructor initializing all necessary variables.
+     *
+     * @param net network
+     * @param disconnectionCollector
+     * @param fileName name of file with result in specified format (every
+     * disconnection is on single line)
+     * @param startResultNo first line (disconnection) to load
+     * @param stopResultNo last line (disconnection) to load
+     */
+    public AlgorithmLoadResults(Net net, DisconnectionCollector disconnectionCollector, String fileName, int startResultNo, int stopResultNo) {
         this.net = net;
         this.disconnectionCollector = disconnectionCollector;
         this.fileName = fileName;
+        this.startResultNo = startResultNo;
+        this.stopResultNo = stopResultNo;
     }
 
     @Override
     public void start(final int number) {
 
-        if (number < 99) {
-            loadExactNumberOfRoads(number);
-        } else {
-            loadVariableNumberOfRoads();
-        }
-
+        loadExactNumberOfRoads(number);
 
     }
 
+    /**
+     * Load disconnection
+     * 
+     * @param number of closed roads in the disconnection (on the line)
+     */
     private void loadExactNumberOfRoads(final int number) {
 
         try {
@@ -49,12 +65,12 @@ class AlgorithmLoadResults implements Algorithm {
             int lineNumber = 1;
             while ((line = br.readLine()) != null) {
                 // skip prefix
-                if (lineNumber < Integer.parseInt(ExperimentSetup.properties.getProperty("startOnCombinationsNo"))) {
+                if (lineNumber < startResultNo) {
                     continue;
                 }
 
                 // skip postfix
-                if (lineNumber > Integer.parseInt(ExperimentSetup.properties.getProperty("stopOnCombinationsNo"))) {
+                if (lineNumber > stopResultNo) {
                     break;
                 }
                 lineNumber++;
@@ -73,23 +89,21 @@ class AlgorithmLoadResults implements Algorithm {
                 }
 
                 Disconnection dis = new Disconnection(setRoad);
+                
+                // shouldn't occur
                 if (dis.getNumClosedRoads() != number) {
                     throw new IllegalStateException("Wrong number of closed roads.");
                 }
+                
                 this.disconnectionCollector.addDisconnection(dis);
 
             }
         } catch (FileNotFoundException ex) {
-            ExperimentSetup.LOGGER.log(Level.SEVERE, null, ex);
-            System.err.println("File with results not found.");
-            System.exit(1);
+            ExperimentSetup.LOGGER.log(Level.SEVERE, "File with results wasn't found.", ex);
+            
         } catch (IOException ex) {
-            ExperimentSetup.LOGGER.log(Level.SEVERE, null, ex);
+            ExperimentSetup.LOGGER.log(Level.SEVERE, "IOException occur during loading results.", ex);
         }
-
     }
 
-    private void loadVariableNumberOfRoads() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
 }
