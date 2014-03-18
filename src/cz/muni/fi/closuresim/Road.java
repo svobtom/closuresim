@@ -4,35 +4,44 @@ import java.util.HashSet;
 import java.util.Set;
 
 /**
- * Class representing road. Every road is two-way.  
- * 
+ * Class representing road. Every road is two-way.
+ *
  * @author Tom
  */
 public class Road {
-    
+
     private int id;
     private Node first_node;
     private Node second_node;
-    /** Name of the road */
+    /**
+     * Name of the road
+     */
     private String name;
-    /** Length of the road in meters */
+    /**
+     * Length of the road in meters
+     */
     private int length;
-    /** Duration of the way by the road in seconds */
+    /**
+     * Duration of the way by the road in seconds
+     */
     private int time;
-    /** Atribute represents rideable of the road  */
+    /**
+     * Atribute represents rideable of the road
+     */
     private boolean closed = false;
 
     private int marking;
-    
+
     /**
      * Create new road.
      */
     public Road() {
-        
+
     }
-    
+
     /**
      * Copy road except the information about first and second nodes.
+     *
      * @param r Road to copy
      */
     public Road(Road r) {
@@ -40,7 +49,7 @@ public class Road {
         this.name = r.name;
         this.closed = r.closed;
     }
-    
+
     @Override
     public int hashCode() {
         int hash = 5;
@@ -62,7 +71,7 @@ public class Road {
         }
         return true;
     }
-    
+
     @Override
     public String toString() {
         String fn;
@@ -72,19 +81,19 @@ public class Road {
         } else {
             fn = first_node.getName();
         }
-        
+
         if (second_node.getName().equals("")) {
             sn = "id" + second_node.getId();
         } else {
             sn = second_node.getName();
         }
-        return this.name;
-        //return id +";"+ name + (closed ? " (closed" : "open") + ", " + fn + " - " + sn + ")";
+        //return this.name;
+        return id +"-"+ name + (closed ? " (closed" : " (open") + ", " + fn + " - " + sn + ")";
     }
 
     /**
-     * Detect if the road is close. 
-     * 
+     * Detect if the road is close.
+     *
      * @return boolean, true if the road is closed, false otherwise
      */
     public boolean isClosed() {
@@ -97,35 +106,35 @@ public class Road {
     public void open() {
         this.closed = false;
     }
-    
+
     /**
-     * Close the road. 
+     * Close the road.
      */
     public void close() {
         this.closed = true;
     }
-    
+
     /**
      * Set rideable of the road.
-     * 
-     * @param closed this boolean is new status of the road.  
+     *
+     * @param closed this boolean is new status of the road.
      */
     public void setClosed(boolean closed) {
         this.closed = closed;
     }
-    
+
     /**
-     * Get the node connected to road. 
-     * 
+     * Get the node connected to road.
+     *
      * @return first node connected to road
      */
     public Node getFirst_node() {
         return first_node;
     }
-    
+
     /**
-     * Set the node that will be connected to the road. 
-     * 
+     * Set the node that will be connected to the road.
+     *
      * @param first_node first node
      */
     public void setFirst_node(Node first_node) {
@@ -133,8 +142,8 @@ public class Road {
     }
 
     /**
-     * Get the node connected to road. 
-     * 
+     * Get the node connected to road.
+     *
      * @return Node second node connected to road
      */
     public Node getSecond_node() {
@@ -142,14 +151,14 @@ public class Road {
     }
 
     /**
-     * Set the node that will be connected to the road. 
-     * 
+     * Set the node that will be connected to the road.
+     *
      * @param second_node second node
      */
     public void setSecond_node(Node second_node) {
         this.second_node = second_node;
     }
-      
+
     public int getId() {
         return id;
     }
@@ -157,22 +166,26 @@ public class Road {
     public void setId(int id) {
         this.id = id;
     }
-    
+
     /**
      * Return two connected nodes as a set.
-     * @return Set<Node> 
+     *
+     * @return Set<Node>
      */
     public Set getNodes() {
-        Set nodes = new HashSet<>();
+        Set nodes = new HashSet<>(2);
         nodes.add(this.first_node);
         nodes.add(this.second_node);
         return nodes;
     }
 
-    public void setNodes(Node firstNode, Node secondNode) {        
-        this.first_node = firstNode;
-        // TODO pridat ochranu proti vlozeni dvou stejnych uzlu
-        this.second_node = secondNode;
+    public void setNodes(Node firstNode, Node secondNode) {
+        if (!firstNode.equals(secondNode)) {
+            this.first_node = firstNode;
+            this.second_node = secondNode;
+        } else {
+            throw new IllegalArgumentException("Loops aren't allowed.");
+        }
     }
 
     public String getName() {
@@ -200,9 +213,9 @@ public class Road {
     }
 
     /**
-     * Return the opposite node of the road. If given node is the first node the method return second node, 
-     * otherwise it return first node. 
-     *  
+     * Return the opposite node of the road. If given node is the first node the
+     * method return second node, otherwise it return first node.
+     *
      * @param node given node
      * @return opposite node
      */
@@ -221,5 +234,5 @@ public class Road {
     public void setMarking(final int marking) {
         this.marking = marking;
     }
-    
+
 }

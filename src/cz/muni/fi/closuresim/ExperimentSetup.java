@@ -140,7 +140,16 @@ public class ExperimentSetup {
                         net,
                         disconnectionCollector,
                         Integer.parseInt(properties.getProperty("numberOfComponents", "2")),
-                        Boolean.parseBoolean(properties.getProperty("findOnlyAccurate")));
+                        Boolean.parseBoolean(properties.getProperty("findOnlyAccurate")),
+                        true);
+                break;
+            case "cycle-cut-my":
+                alg = new AlgorithmCycleCut(
+                        net,
+                        disconnectionCollector,
+                        Integer.parseInt(properties.getProperty("numberOfComponents", "2")),
+                        Boolean.parseBoolean(properties.getProperty("findOnlyAccurate")),
+                        false);
                 break;
             case "cycle2":
                 alg = new AlgorithmCycle2(net, disconnectionCollector, outputDirectory);

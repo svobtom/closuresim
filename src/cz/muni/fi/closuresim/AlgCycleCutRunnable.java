@@ -11,7 +11,6 @@ import java.util.logging.Level;
 import org.jgrapht.Graph;
 import org.jgrapht.alg.KruskalMinimumSpanningTree;
 import org.jgrapht.graph.Multigraph;
-import org.jgrapht.graph.UndirectedSubgraph;
 
 /**
  *
@@ -71,12 +70,6 @@ public class AlgCycleCutRunnable implements Runnable {
      */
     private void theFindCyclesCutAlgorithm(final Set<Road> bannedRoads, final Road road, final int components, boolean recComp, boolean skip) {
 
-        /*
-         // najde nejkratsi cestu z a do b, bez pouziti cest z bannedRoads
-         // a, b jsou vrcholy vybrane cesty, samotna cesta jiz patri do banned roads, takze nenalezne trivialni cestu
-         // obsahujici pouze prave tuto cestu z a do b
-         final List<Road> path = findShortestPath(road.getFirst_node(), road.getSecond_node(), bannedRoads);
-         */
         List<Road> path = new LinkedList<>();
 
         if (!recComp) {

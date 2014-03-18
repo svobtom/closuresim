@@ -1,1 +1,9 @@
+/build/
 /dist/
+/lib/
+/nbproject/
+/results/
+/results-old/
+/test-result/
+/*.csv
+/*.txt

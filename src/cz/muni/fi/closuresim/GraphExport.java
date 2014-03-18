@@ -28,12 +28,18 @@ import java.util.logging.Level;
  */
 public class GraphExport {
 
-    private final String filename = "source-net.graphml";
+    private final String filename; 
     private final String coloredRoadsFileName = "colored-roads.graphml";
     private final File outputDirectory;
 
     public GraphExport(final File outputDirectory) {
         this.outputDirectory = outputDirectory;
+        this.filename = "source-net.graphml";
+    }
+
+    public GraphExport(final File outputDirectory, String fileName) {
+        this.outputDirectory = outputDirectory;
+        this.filename = fileName + ".graphml";
     }
 
     public void export(Net net) {
@@ -251,7 +257,7 @@ public class GraphExport {
 
         // mapping new vertex to integer, useful for creating edges
         Map<Integer, Vertex> mapa = new HashMap<>(net.getNodes().size());
-        
+
         for (Node node : net.getNodes()) {
             Vertex newVertex = graph.addVertex("n" + node.getId());
             newVertex.setProperty("label", node.getName());
@@ -259,7 +265,7 @@ public class GraphExport {
             newVertex.setProperty("r", 100);
             newVertex.setProperty("g", 100);
             newVertex.setProperty("b", 100);
-            
+
             newVertex.setProperty("lat", node.getLat());
             newVertex.setProperty("lng", node.getLng());
 

@@ -124,6 +124,10 @@ public class Node {
         this.roads = roads;
     }
     
+    public boolean setRoad(Road r) {
+        return this.roads.add(r);
+    }
+    
     /**
      * Clear list of connected roads.
      */
