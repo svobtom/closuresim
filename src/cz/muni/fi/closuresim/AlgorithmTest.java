@@ -8,7 +8,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import org.jgrapht.Graph;
+import org.jgrapht.alg.CycleDetector;
 import org.jgrapht.alg.DijkstraShortestPath;
+import org.jgrapht.graph.DirectedMultigraph;
 import org.jgrapht.graph.Multigraph;
 
 /**
@@ -26,9 +28,10 @@ class AlgorithmTest implements Algorithm {
     @Override
     public void start(int maxClosedRoads) {
 
-        varianta1();
-        //varianta2();
+        allCycleEnumeration();
 
+        //varianta1();
+        //varianta2();
     }
 
     private void varianta1() {
@@ -73,7 +76,7 @@ class AlgorithmTest implements Algorithm {
             for (Node n2 : this.net.getNodes()) {
 
                 if (!n1.equals(n2)) {
-                    
+
                     DijkstraShortestPath<Node, Road> dsp = new DijkstraShortestPath<>(graph, n1, n2);
 
                     System.out.print(dsp.getPathLength() + " ");
@@ -186,6 +189,34 @@ class AlgorithmTest implements Algorithm {
             } // end for
         } // end while
         return previousRoad;
+
+    }
+
+    private void allCycleEnumeration() {
+
+        // net to jGrapht
+        DirectedMultigraph<Node, Road> graph = new DirectedMultigraph<>(Road.class);                
+
+        // add vertices
+        for (Node n : this.net.getNodes()) {
+            graph.addVertex(n);
+        }
+
+        // add roads
+        for (Road r : this.net.getRoads()) {
+            graph.addEdge(r.getFirst_node(), r.getSecond_node(), r);
+            graph.addEdge(r.getSecond_node(), r.getFirst_node(),  r);
+        }
+        
+        graph.removeVertex(net.getNode(24));
+        
+        CycleDetector<Node, Road> cycleDetector = new CycleDetector<>(graph);
+        
+        for (Node s : cycleDetector.findCycles()) {
+            System.out.println(s);
+        }
+        
+        System.out.println("Number of cycles " + cycleDetector.findCycles().size());
 
     }
 

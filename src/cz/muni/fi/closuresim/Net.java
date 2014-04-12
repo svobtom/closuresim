@@ -1,9 +1,12 @@
 package cz.muni.fi.closuresim;
 
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -84,23 +87,43 @@ public class Net {
     }
 
     /**
-     * Find node in the net by its name.
+     * Find road in the net by its name.
      *
-     * @param nodeName name fo the node
-     * @return node if exists, else null
+     * @param roadName name of the road
+     * @return road if exists, else null
      */
-    public Road getRoad(final String nodeName) {
-        for (Iterator<Road> it = roads.iterator(); it.hasNext();) {
-            Road r = it.next();
-            if (r.getName().equals(nodeName)) {
+    public Road getRoad(final String roadName) {
+
+        for (Road r : this.roads) {
+            if (r.getName().equals(roadName)) {
                 return r;
             }
         }
         return null;
     }
 
+    /**
+     * Get set of roads.
+     *
+     * @return set of roads
+     */
     public Set<Road> getRoads() {
         return roads;
+    }
+
+    /**
+     * Get set of closed roads.
+     *
+     * @return set of roads
+     */
+    public Set<Road> getClosedRoads() {
+        Set<Road> result = new HashSet<>();
+        for (Road r : this.roads) {
+            if (r.isClosed()) {
+                result.add(r);
+            }
+        }
+        return result;
     }
 
     public void setRoads(Set<Road> roads) {
@@ -108,7 +131,17 @@ public class Net {
     }
 
     /**
-     * Count the components. If the net is connected it return 1.
+     * Open all roads in the net.
+     */
+    public void openAllRoads() {
+        for (Road r : this.roads) {
+            r.open();
+        }
+    }
+
+    /**
+     * Count the components. If the net is connected it return 1. Let nodes in
+     * the net marked by integers (from 1 to number_of_component).
      *
      * @return int - number of components in the net
      */
@@ -391,40 +424,40 @@ public class Net {
         // remove roads set
         this.roads.clear();
     }
-/*
-    public boolean isAllRoadsConnected() {
+    /*
+     public boolean isAllRoadsConnected() {
 
-        for (Road r : roads) {
-            r.setMarking(0);
-        }
+     for (Road r : roads) {
+     r.setMarking(0);
+     }
 
-        Road first = roads.iterator().next();
-        isAllRoadsConnectedRec(first);
+     Road first = roads.iterator().next();
+     isAllRoadsConnectedRec(first);
 
-        for (Road r : roads) {
-            if (r.getMarking() == 0) {
-                return false;
-            }
-        }
-        return true;
+     for (Road r : roads) {
+     if (r.getMarking() == 0) {
+     return false;
+     }
+     }
+     return true;
         
-    }
+     }
 
-    private void isAllRoadsConnectedRec(Road first) {
-        if (first.getMarking() == 0) {
-            first.setMarking(1);
-            for (Node node : first.) {
+     private void isAllRoadsConnectedRec(Road first) {
+     if (first.getMarking() == 0) {
+     first.setMarking(1);
+     for (Node node : first.) {
                 
-            }
-        }
+     }
+     }
         
         
-    }
-    */
+     }
+     */
 
     /**
      * Get node by its name.
-     * 
+     *
      * @param name
      * @return node if found, el
      */
@@ -436,4 +469,269 @@ public class Net {
         }
         return null;
     }
+
+    /**
+     * Check if the net contains node with the given name.
+     *
+     * @param name of the node
+     * @return true if the net contains the node, false if not
+     */
+    public boolean containsNode(String name) {
+
+        for (Node n : this.nodes) {
+            if (n.getName().equals(name)) {
+                return true;
+            }
+        }
+        return false;
+
+    }
+
+    /**
+     * Check if the net contains road with the given name.
+     *
+     * @param name name of the road
+     * @return true if the net contains the road, false if not
+     */
+    public boolean containsRoad(String name) {
+
+        for (Road r : this.roads) {
+            if (r.getName().equals(name)) {
+                return true;
+            }
+        }
+        return false;
+
+    }
+
+    /**
+     * Count inhabitants in all components of the net. Method
+     * getNumOfComponents() must be run before running this method (because
+     * marking of nodes).
+     *
+     * @return list of sums of inhabitants by components, null if nodes weren't
+     * marked
+     */
+    public List<Integer> getInhabitantsByComponents() {
+
+        // check marking
+        for (Node node : this.nodes) {
+            if (node.getMarking() == 0) {
+                ExperimentSetup.LOGGER.warning("A node wasn't marked");
+                return null;
+            }
+        }
+
+        Map<Integer, Integer> inhabitantsByComponent = new HashMap<>();
+
+        // sum nodes in the component
+        for (Node node : this.nodes) {
+            final int marking = node.getMarking();
+            if (inhabitantsByComponent.containsKey(marking)) {
+                int recentNumOfInhabitants = inhabitantsByComponent.get(marking);
+                inhabitantsByComponent.put(marking, recentNumOfInhabitants + node.getNumOfInhabitant());
+            } else {
+                inhabitantsByComponent.put(node.getMarking(), node.getNumOfInhabitant());
+            }
+        }
+
+        // return list
+        List<Integer> result = new LinkedList<>();
+        result.addAll(inhabitantsByComponent.values());
+        return result;
+    }
+
+    /**
+     * Check how much roads must be repared IN ROW to have connected network.
+     * Method getNumOfComponents() must be run before running this method
+     * (because marking of nodes).
+     *
+     * @return number of roads, -1 if nodes weren't marked
+     */
+    public int getRemotenessComponentsIndex() {
+
+        Net reducedNetwork = getReductedNetwork();
+
+        reducedNetwork.openAllRoads();
+
+        // choose largest component/node (according to number of inhabitants)
+        Node largestNode = null;
+        for (Node node : reducedNetwork.getNodes()) {
+            if (largestNode == null || largestNode.getNumOfInhabitant() < node.getNumOfInhabitant()) {
+                largestNode = node;
+            }
+        }
+
+        // path from other components/nodes to the largest node
+        int longestPathLength = 0;
+        for (Node otherNode : reducedNetwork.getNodes()) {
+            List<Road> path = findShortestPath(largestNode, otherNode);
+            if (path.size() > longestPathLength) {
+                longestPathLength = path.size();
+            }
+        }
+
+        return longestPathLength;
+
+    }
+
+    /**
+     * Create and return reducted network. It means that every component is
+     * represented by one node. Every road in reducted network represent closed
+     * road. There doesn't have to be all closed roads from origin network.
+     *
+     * @return reducted network
+     */
+    private Net getReductedNetwork() {
+
+        // check marking
+        for (Node node : this.nodes) {
+            if (node.getMarking() == 0) {
+                ExperimentSetup.LOGGER.warning("A node wasn't marked");
+                return null;
+            }
+        }
+
+        // create reducted net
+        Net result = new Net();
+
+        int j = 1;
+        for (Node node : this.nodes) {
+            int marking = node.getMarking();
+            if (!result.containsNode("m" + marking)) {
+                // node hasn't exist yest
+                Node n = new Node();
+                n.setId(j++);
+                n.setName("m" + marking);
+                n.setNumOfInhabitants(node.getNumOfInhabitant());
+                result.addNode(n);
+            } else {
+                // node exist in reducted net, add inhabitants
+                Node n = result.getNode("m" + marking);
+                n.addInhabitants(node.getNumOfInhabitant());
+            }
+        }
+
+        int i = 1;
+        for (Road closedRoad : getClosedRoads()) {
+            int marking1 = closedRoad.getFirst_node().getMarking();
+            int marking2 = closedRoad.getSecond_node().getMarking();
+
+            if (!result.containsRoad(marking1 + "-" + marking2) && !result.containsRoad(marking2 + "-" + marking1)) {
+                Road r = new Road();
+                r.setId(i++);
+                r.setName(marking1 + "-" + marking2);
+                r.close();
+
+                // add road
+                r.setFirst_node(result.getNode("m" + marking1));
+                r.setSecond_node(result.getNode("m" + marking2));
+                result.getNode("m" + marking1).addRoad(r);
+                result.getNode("m" + marking2).addRoad(r);
+                result.addRoad(r);
+            }
+
+        }
+
+        return result;
+    }
+
+    /**
+     * Find shortest path between specified nodes avoiding closed roads.
+     *
+     * @param source source node
+     * @param target target node
+     * @return List<Road> list of roads on the shortest path, if the path
+     * doesn't exist the empty list is returned
+     */
+    private List<Road> findShortestPath(final Node source, final Node target) {
+        // path to return, empty yet
+        final List<Road> listOfRoadsOnThePath = new LinkedList<>();
+
+        // get map of ancestors for reconstruction path from source to target 
+        final Map<Node, NodeAndRoad> mapOfAncestors = dijkstra(source, target);
+
+        // road doesn't exist
+        if (!mapOfAncestors.containsKey(target)) {
+            return listOfRoadsOnThePath;
+        }
+
+        // reconstruction path from source to target from map
+        Node recent = target;
+        NodeAndRoad previous;
+        while (!recent.equals(source)) {
+            previous = mapOfAncestors.get(recent);
+
+            listOfRoadsOnThePath.add(previous.getRoad());
+            recent = previous.getNode();
+        }
+
+        return listOfRoadsOnThePath;
+    }
+
+    /**
+     * Dijkstra algorithm modified to avoid closed roads.
+     *
+     * @param source start node
+     * @param target target node
+     * @return map of nodes and its ancestors on the optimal path
+     */
+    private Map<Node, NodeAndRoad> dijkstra(final Node source, final Node target) {
+        final Map<Node, Integer> distance = new HashMap<>();
+        final Map<Node, Boolean> visited = new HashMap<>();
+        final Map<Node, NodeAndRoad> previousRoad = new HashMap<>(); // previous node and road in the best path
+
+        // init nodes
+        for (Node node : getNodes()) {
+            distance.put(node, Integer.MAX_VALUE);
+            visited.put(node, Boolean.FALSE);
+        }
+
+        // start with the source node
+        distance.put(source, 0);
+
+        final Set<Node> queue = new HashSet<>();
+        queue.add(source);
+
+        while (!queue.isEmpty()) {
+            Node u = null; // node with smallest distance, not visited
+            int smallestDistance = Integer.MAX_VALUE;
+
+            // find smallest distance
+            for (Node node : queue) {
+                if (!visited.get(node) && distance.get(node) < smallestDistance) {
+                    smallestDistance = distance.get(node);
+                    u = node;
+                }
+            }
+
+            // if we closed target node
+            if (target.equals(u)) {
+                return previousRoad;
+            }
+
+            queue.remove(u);
+            visited.put(u, Boolean.TRUE);
+
+            for (final Road r : u.getRoads()) {
+
+                // skip closed road
+                if (!r.isClosed()) {
+
+                    final Node v = r.getOppositeNode(u);
+                    final int alt = distance.get(u) + 1; // accumulate shortest distance, dist[u] + dist_between(u, v)
+                    if (alt < distance.get(v) && !visited.get(v)) {
+                        distance.put(v, alt);
+                        //previous.put(v, u);
+                        previousRoad.put(v, new NodeAndRoad(u, r));
+                        queue.add(v);
+                    }
+
+                }
+
+            } // end for
+        } // end while
+        return previousRoad;
+    }
+
 }

@@ -1,6 +1,8 @@
 package cz.muni.fi.closuresim;
 
+import java.util.HashSet;
 import java.util.Queue;
+import java.util.Set;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.logging.Level;
 
@@ -17,10 +19,10 @@ public class AlgorithmCycle implements Algorithm {
     private final int maxNumOfComponents;
     /* Determine if disconnection containing less roads than specified will be stored */
     private final boolean findOnlyAccurateDisconnection;
-    /**
-     * Use jGrapht library
-     */
-    private boolean withJG;
+    /** Use jGrapht library */
+    private final boolean withJG;
+    /** Road witch will be skiped */
+    private final Set<Road> roadsToSkip;
     /* Number of threads to create (one core is left for the main thread) */
     private final int NUMBER_OF_THREADS = ExperimentSetup.USE_CPUs - 1;
     /* Queue of unprocessed roads */
@@ -31,12 +33,30 @@ public class AlgorithmCycle implements Algorithm {
             DisconnectionCollector disconnectionCollector,
             final int maxNumOfComponents,
             final boolean findOnlyAccurateDisconnection,
-            boolean withJG) {
+            boolean withJG, 
+            Set<Road> roadsToSkip
+            ) {
         this.net = net;
         this.disconnectionCollector = disconnectionCollector;
         this.maxNumOfComponents = maxNumOfComponents;
         this.findOnlyAccurateDisconnection = findOnlyAccurateDisconnection;
         this.withJG = withJG;
+        this.roadsToSkip = roadsToSkip;
+    }
+    
+        public AlgorithmCycle(
+            Net net,
+            DisconnectionCollector disconnectionCollector,
+            final int maxNumOfComponents,
+            final boolean findOnlyAccurateDisconnection,
+            boolean withJG
+            ) {
+        this.net = net;
+        this.disconnectionCollector = disconnectionCollector;
+        this.maxNumOfComponents = maxNumOfComponents;
+        this.findOnlyAccurateDisconnection = findOnlyAccurateDisconnection;
+        this.withJG = withJG;
+        this.roadsToSkip = new HashSet<>(0);
     }
 
     @Override
@@ -44,6 +64,9 @@ public class AlgorithmCycle implements Algorithm {
 
         // add all roads to the queue, threads are going to run over all roads in the queue
         queue.addAll(net.getRoads());
+        
+        // skip road processed before
+        queue.removeAll(roadsToSkip);
 
         // validate number of threads
         if (NUMBER_OF_THREADS < 1) {

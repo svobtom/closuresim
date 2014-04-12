@@ -2,14 +2,20 @@ package cz.muni.fi.closuresim;
 
 import java.io.*;
 import java.nio.charset.Charset;
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.StringTokenizer;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.filefilter.FileFilterUtils;
+import org.apache.commons.io.filefilter.IOFileFilter;
 
 /**
  * Manage loading network from files.
@@ -148,6 +154,15 @@ public class NetLoader {
                 } else {
 
                     r.setNodes(start_node, end_node);
+
+                    if (this.net.containsRoad(name)) {
+                        System.out.println("POOOOOOOOOOOOOOOOZOOOOR");
+
+                        Road tempRoad = this.net.getRoad(name);
+                        System.out.println("N: " + tempRoad);
+                        System.out.println("S: " + r);
+                        System.out.println();
+                    }
 
                     start_node.addRoad(r);
                     end_node.addRoad(r);
@@ -428,7 +443,7 @@ public class NetLoader {
                 String name = elements[0];
                 String lat = elements[1];
                 String lng = elements[2];
-                
+
                 this.net.getNode(name).setLat(Double.parseDouble(lat));
                 this.net.getNode(name).setLng(Double.parseDouble(lng));
 
@@ -439,5 +454,43 @@ public class NetLoader {
             ExperimentSetup.LOGGER.log(Level.SEVERE, "IO exception occur.", ex);
         }
 
+    }
+
+    /**
+     * Load roads which should be skipped.
+     *
+     * @param path path to directory with processed roads files
+     * @return set of roads which should be skipped
+     */
+    public Set<Road> loadRoadsToSkip(String path) {
+
+        // load directory
+        File directory = new File(path);
+        Collection<File> fileList = FileUtils.listFiles(directory, FileFilterUtils.suffixFileFilter(".csv"), null);
+
+        Set<Road> result = new HashSet<>();
+
+        // for each file in directory
+        for (File file : fileList) {
+
+            String roadName = file.getName().replace(".csv", "");
+
+            /*
+             // Do the road exist in this net?
+             if (!this.net.containsRoad(roadName)) {
+             ExperimentSetup.LOGGER.log(Level.WARNING, "The net doesn't contain road with name " + roadName + " which should be skiped");
+             continue;
+             }
+             */
+            Road newRoad = this.net.getRoad(roadName);
+
+            // Do the road exist in this net?
+            if (newRoad == null) {
+                ExperimentSetup.LOGGER.log(Level.WARNING, "The net doesn't contain road with name " + roadName + " which should be skiped");
+            }
+            result.add(newRoad);
+        }
+
+        return result;
     }
 }

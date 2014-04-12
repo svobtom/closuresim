@@ -1,5 +1,6 @@
 package cz.muni.fi.closuresim;
 
+import java.io.File;
 import java.util.List;
 import java.util.Set;
 import java.util.HashSet;
@@ -10,8 +11,7 @@ import org.jgrapht.graph.Multigraph;
 import org.jgrapht.alg.DijkstraShortestPath;
 
 /**
- * Body of the cycle algorithm. 
- * It use jGraphT library.
+ * Body of the cycle algorithm. It use jGraphT library.
  *
  * @author Tom
  */
@@ -23,6 +23,7 @@ public class AlgCycleRunnableJG implements Runnable {
     private final int maxNumberOfRoadsToClose;
     private final int maxNumberOfComponents;
     private final boolean findOnlyAccurateDisconnection;
+    private final ResultWriter resultWriter;
 
     private final Graph<Node, Road> graph = new Multigraph(Road.class);
 
@@ -33,6 +34,8 @@ public class AlgCycleRunnableJG implements Runnable {
         this.maxNumberOfRoadsToClose = roads;
         this.maxNumberOfComponents = comp;
         this.findOnlyAccurateDisconnection = foad;
+        File partRes = new File(ExperimentSetup.outputDirectory, "partial-results");
+        this.resultWriter = new ResultWriter(partRes);
 
         // add vertices
         for (Node n : this.net.getNodes()) {
@@ -66,6 +69,9 @@ public class AlgCycleRunnableJG implements Runnable {
 
                 // add found disconnections by one run of the algorithm to the disconnection collector
                 final int numFoundDis = this.disconnections.size();
+                
+                // save partial results
+                resultWriter.storeDisconnection(cRoadToStart.getName(), this.disconnections);
 
                 this.disconnectionCollector.addDisconnections(this.disconnections);
 
@@ -115,8 +121,8 @@ public class AlgCycleRunnableJG implements Runnable {
             path = dsp.getPathEdgeList();
         }
 
-        for (Road roadTORemove : bannedRoads) {
-            graph.addEdge(roadTORemove.getFirst_node(), roadTORemove.getSecond_node(), roadTORemove);
+        for (Road roadToAdd : bannedRoads) {
+            graph.addEdge(roadToAdd.getFirst_node(), roadToAdd.getSecond_node(), roadToAdd);
         }
 
         // Does the path exist?

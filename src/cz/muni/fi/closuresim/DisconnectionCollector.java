@@ -16,12 +16,14 @@ import java.util.TreeSet;
  * @author Tom
  */
 public class DisconnectionCollector {
-
+    /** Disconnections */
     private Set<Disconnection> disconnections;
     private Comparator comparator;
 
     public DisconnectionCollector() {
         this.disconnections = Collections.synchronizedSet(new HashSet<Disconnection>());
+        // set default comparator
+        this.comparator = new VarianceComparator();
     }
 
     /**

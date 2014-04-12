@@ -125,64 +125,7 @@ public class AlgCycleCutRunnableJG implements Runnable {
         if (path == null) {
             // path doesn't exist
 
-            Graph g = new Multigraph(Road.class);
-
-            // add vertices
-            for (Node n : this.graph.vertexSet()) {
-                g.addVertex(n);
-            }
-
-            // add roads except F roads / no F roads are int the graph
-            for (Road rro : this.graph.edgeSet()) {
-                if (!bannedRoads.contains(rro)) {
-                    g.addEdge(rro.getFirst_node(), rro.getSecond_node(), rro);
-                }
-            }
-
-            // for each road in F - add one F edge in every run of the cycle
-            for (Road r : bannedRoads) {
-
-                g.addEdge(r.getFirst_node(), r.getSecond_node(), r);
-
-                // get road on the spanning tree/forest
-                MinimumSpanningTree<Node, Road> st = new KruskalMinimumSpanningTree<>(g);
-
-                // this condition is true if and only if the spanning tree isn't in one component
-                if ((g.vertexSet().size() - st.getMinimumSpanningTreeTotalWeight() - 1) <= 1) {
-
-                    Disconnection dis = new Disconnection(bannedRoads);
-                    disconnections.add(dis);
-
-                    // recursive finding disconnections to more components
-                    if ((components + 1) < maxNumberOfComponents) {
-                        Set<Road> allowedRoads = new HashSet<>(net.getRoads());
-                        allowedRoads.removeAll(bannedRoads);
-
-                        // for every recently not banned road
-                        for (Iterator<Road> it = allowedRoads.iterator(); it.hasNext();) {
-                            final Road allowedRoad = it.next();
-                            theFindCyclesCutAlgorithm(bannedRoads, allowedRoad, components + 1, true);
-                        }
-                    }
-
-                } else {
-
-                    Set<Road> roadMST = st.getMinimumSpanningTreeEdgeSet();
-                    roadMST.remove(r); // for recursion choose T \ {f}
-
-                    if (bannedRoads.size() < maxNumberOfRoadsToClose) {
-                        for (Road roadOnSpanningTree : roadMST) {
-                            Set<Road> newBannedRoads = new HashSet<>(bannedRoads);
-                            newBannedRoads.add(roadOnSpanningTree);
-
-                            theFindCyclesCutAlgorithm(newBannedRoads, roadOnSpanningTree, components, true);
-                        }
-                    }
-                }
-
-                g.removeEdge(r);
-
-            } // end of for each road in F
+            spinningTreeAlg(bannedRoads, components);
 
         } else {
             // path exists
@@ -199,4 +142,67 @@ public class AlgCycleCutRunnableJG implements Runnable {
             }
         }
     }
+
+    private void spinningTreeAlg(Set<Road> bannedRoads, int components) {
+
+        Graph g = new Multigraph(Road.class);
+        // add vertices
+        for (Node n : this.net.getNodes()) {
+            g.addVertex(n);
+        }
+        // add roads except F roads / no F roads are int the graph
+        for (Road rro : this.net.getRoads()) {
+            if (!bannedRoads.contains(rro)) {
+                g.addEdge(rro.getFirst_node(), rro.getSecond_node(), rro);
+            }
+        }
+
+        // for each road in F - add one F edge in every run of the cycle
+        for (Road r : bannedRoads) {
+
+            g.addEdge(r.getFirst_node(), r.getSecond_node(), r);
+
+            // get road on the spanning tree/forest
+            MinimumSpanningTree<Node, Road> st = new KruskalMinimumSpanningTree<>(g);
+
+            // this condition is true if and only if the spanning tree isn't in one component
+            if ((g.vertexSet().size() - st.getMinimumSpanningTreeTotalWeight() - 1) > 0) {
+
+                Disconnection dis = new Disconnection(bannedRoads);
+                disconnections.add(dis);
+
+                // recursive finding disconnections to more components
+                if ((components + 1) < maxNumberOfComponents) {
+                    Set<Road> allowedRoads = new HashSet<>(net.getRoads());
+                    allowedRoads.removeAll(bannedRoads);
+
+                    for (Road allowedRoad : allowedRoads) {
+
+                        theFindCyclesCutAlgorithm(bannedRoads, allowedRoad, components + 1, true);
+                        //spinningTreeAlg(bannedRoads, components + 1);
+                    }
+                }
+
+            } else {
+                
+                Set<Road> roadMST = st.getMinimumSpanningTreeEdgeSet();
+                roadMST.remove(r); // for recursion choose T \ {f}
+
+                if (bannedRoads.size() < maxNumberOfRoadsToClose) {
+                    
+                    for (Road roadOnSpanningTree : roadMST) {
+                        Set<Road> newBannedRoads = new HashSet<>(bannedRoads);
+                        newBannedRoads.add(roadOnSpanningTree);
+
+                        theFindCyclesCutAlgorithm(newBannedRoads, roadOnSpanningTree, components, true);
+                    }
+                }
+            }
+
+            g.removeEdge(r);
+
+        } // end of for each road in F
+
+    }
+
 }

@@ -58,6 +58,16 @@ public class MyLogger extends Logger {
         }
     }
 
+    @Override
+    public void log(Level level, String msg, Throwable thrown) {
+        // in case of this levels print message
+        if (level.equals(Level.SEVERE) || level.equals(Level.WARNING)) {
+            System.err.println(level.toString() + ": " + msg);
+        }
+        
+        super.log(level, msg, thrown);
+    }
+
     /**
      * Start experiment. Set up start time.
      */
@@ -72,9 +82,10 @@ public class MyLogger extends Logger {
     protected void endExperiment() {
         // display time of execution
         addTime("endTime");
-        System.out.println("Finding time is " + (getTime("endOfAlgorithm") - getTime("startTime")) / 1000.0 + " seconds. ");
-        System.out.println("Evaluation time is " + (getTime("endOfEvaluation") - getTime("endOfAlgorithm")) / 1000.0 + " seconds. ");
-        System.out.println("Sorting time is " + (getTime("endTime") - getTime("endOfEvaluation")) / 1000.0 + " seconds. ");
+        System.out.println("Finding time is " + (getTime("endOfAlgorithm") - getTime("startOfAlgorithm")) / 1000.0 + " seconds. ");
+        System.out.println("Evaluation time is " + (getTime("endOfEvaluation") - getTime("startOfEvaluation")) / 1000.0 + " seconds. ");
+        System.out.println("Sorting time is " + (getTime("endOfSorting") - getTime("startOfSorting")) / 1000.0 + " seconds. ");
+        System.out.println("Analysis time is " + (getTime("endOfAnalysis") - getTime("startOfAnalysis")) / 1000.0 + " seconds. ");
         System.out.println("Total time is " + (getTime("endTime") - getTime("startTime")) / 1000.0 + " seconds. ");
         System.out.println("==================================================================");
         this.info("End of experiment");
@@ -83,7 +94,7 @@ public class MyLogger extends Logger {
         for (Handler h : this.getHandlers()) {
             h.close();
         }
-        
+
         try {
             final File fileFilename = new File(filename);
             FileUtils.copyFileToDirectory(fileFilename, outputDirectory);
@@ -91,7 +102,7 @@ public class MyLogger extends Logger {
         } catch (IOException ex) {
             ExperimentSetup.LOGGER.log(Level.SEVERE, "Can't copy log file, IO exception occur.", ex);
         }
-        
+
     }
 
     /**
@@ -105,7 +116,18 @@ public class MyLogger extends Logger {
         super.log(Level.INFO, name);
     }
 
+    /**
+     * Get stored time by logger.
+     *
+     * @param name name of time point
+     * @return
+     */
     private long getTime(String name) {
-        return this.times.get(name);
+        Long result = this.times.get(name);
+        if (result != null) {
+            return result;
+        } else {
+            return 0;
+        }
     }
 }

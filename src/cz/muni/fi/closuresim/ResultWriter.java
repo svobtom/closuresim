@@ -4,10 +4,10 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.Set;
 import java.util.logging.Level;
-import java.util.logging.Logger;
 import org.apache.commons.io.FileUtils;
 
 /**
@@ -24,6 +24,11 @@ public class ResultWriter {
         this.outputDirectory = od;
     }
 
+    public ResultWriter(final File od) {
+        this.outputDirectory = od;
+        od.mkdir();
+    }
+
     public static void prepareOutputDirectory(File outputDirectory, String configFile) {
         // prepareDirectory
         if (outputDirectory.exists()) {
@@ -31,7 +36,7 @@ public class ResultWriter {
             outputDirectory.renameTo(new File(outputDirectory + "-old"));
         }
         outputDirectory.mkdir();
-        
+
         try {
             FileUtils.copyFileToDirectory(new File(configFile), outputDirectory);
         } catch (IOException ex) {
@@ -83,12 +88,18 @@ public class ResultWriter {
                 }
                 outAll.write("VAL;");
 
-                out[disconnection.getNumClosedRoads() - 1].write(Integer.toString((Integer) disconnection.getEvaluation(Valuation.COMPONENTS)) + ";");
-                out[disconnection.getNumClosedRoads() - 1].write(Double.toString((Double) disconnection.getEvaluation(Valuation.VARIANCE))); // todo
+                final double roundedVariance = (double) Math.round(disconnection.getVariance() * 100) / 100;
+                
+                out[disconnection.getNumClosedRoads() - 1].write(Integer.toString(disconnection.getNumOfComponents()) + ";");
+                out[disconnection.getNumClosedRoads() - 1].write(Double.toString(roundedVariance) + ";");
+                out[disconnection.getNumClosedRoads() - 1].write(Integer.toString(disconnection.getSmallerComponentInhabitants()) + ";");
+                out[disconnection.getNumClosedRoads() - 1].write(Integer.toString(disconnection.getRCI()));
                 out[disconnection.getNumClosedRoads() - 1].newLine();
 
-                outAll.write(Integer.toString((Integer) disconnection.getEvaluation(Valuation.COMPONENTS)) + ";"); // todo
-                outAll.write(Double.toString((Double) disconnection.getEvaluation(Valuation.VARIANCE)));
+                outAll.write(Integer.toString(disconnection.getNumOfComponents()) + ";");
+                outAll.write(Double.toString(roundedVariance) + ";");
+                outAll.write(Integer.toString(disconnection.getSmallerComponentInhabitants()) + ";");
+                outAll.write(Integer.toString(disconnection.getRCI()));
                 outAll.newLine();
             }
 
@@ -105,4 +116,52 @@ public class ResultWriter {
         }
 
     }
+
+    /**
+     * Write partial result to file.
+     *
+     * @param name name of the file
+     * @param disconnections collection to write
+     */
+    public void storeDisconnection(String name, Collection<Disconnection> disconnections) {
+
+        // create File Writers
+        try {
+            FileWriter fileWriterAll = new FileWriter(new File(outputDirectory, name + ".csv"));
+            BufferedWriter outAll = new BufferedWriter(fileWriterAll);
+
+            if (disconnections.isEmpty()) {
+                outAll.write("None_disconnection_found.");
+                outAll.close();
+                return;
+            }
+
+            for (Disconnection disconnection : disconnections) {
+
+                boolean first = true;
+                // iterate over all closed roads in the disconnection
+                for (Road r : disconnection.getRoads()) {
+                    if (!first) {
+                        outAll.write(";");
+                    } else {
+                        first = false;
+                    }
+
+                    outAll.write(r.getName());
+                }
+                outAll.newLine();
+            }
+
+            outAll.close();
+            fileWriterAll.close();
+
+            ExperimentSetup.LOGGER.log(Level.INFO, "Partial result " + name + ".csv was stored.");
+
+        } catch (IOException ex) {
+            ExperimentSetup.LOGGER.log(Level.SEVERE, "Error writing partial result to file", ex);
+            System.exit(1);
+        }
+
+    }
+
 }

@@ -25,6 +25,7 @@ public class Node {
 
     /**
      * Copy node without information about roads.
+     *
      * @param n Node to copy
      */
     public Node(final Node n) {
@@ -57,7 +58,7 @@ public class Node {
         }
         return true;
     }
-    
+
     public int getType() {
         return type;
     }
@@ -123,11 +124,11 @@ public class Node {
     public void setRoads(Set roads) {
         this.roads = roads;
     }
-    
+
     public boolean setRoad(Road r) {
         return this.roads.add(r);
     }
-    
+
     /**
      * Clear list of connected roads.
      */
@@ -160,6 +161,15 @@ public class Node {
         this.numOfInhabitants = numOfInhabitants;
     }
 
+    /**
+     * Increase number of inhabitants by given value.
+     * 
+     * @param increase 
+     */
+    public void addInhabitants(int increase) {
+        this.numOfInhabitants += increase;
+    }
+
     public int getMarking() {
         return marking;
     }
@@ -170,6 +180,7 @@ public class Node {
 
     /**
      * Return set of connected neighbours (roads must be open)
+     *
      * @return Set<Node> Set of nodes
      */
     public Set<Node> getNeighbours() {
@@ -202,5 +213,5 @@ public class Node {
     public double getLng() {
         return lng;
     }
-    
+
 }

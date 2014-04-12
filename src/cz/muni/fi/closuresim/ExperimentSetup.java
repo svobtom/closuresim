@@ -1,7 +1,9 @@
 package cz.muni.fi.closuresim;
 
-import java.io.File;
 import java.util.Properties;
+import java.io.File;
+import java.util.Set;
+import java.util.HashSet;
 //import cz.muni.fi.closuresim.tools.NetReducer;
 
 /**
@@ -22,31 +24,34 @@ public class ExperimentSetup {
      */
     protected static int USE_CPUs;
     /**
-     * Properties loaded from configuration file. Properties are availible by
-     * all class of this package.
+     * Properties loaded from configuration file.
      */
     private static Properties properties;
     /**
      * Output directory
      */
-    private static final File outputDirectory = new File("results");
+    protected static final File outputDirectory = new File("results");
     /**
      * Logger which log all events in application.
      */
     protected static final MyLogger LOGGER = new MyLogger(outputDirectory);
 
+    /**
+     * The main method
+     * 
+     * @param args arguments from command line
+     */
     public static void main(String[] args) {
         LOGGER.startExperiment();
 
         // read command line arguments
-        // location of config file
-        String configFile;
+        String configFile; // location of config file
         if (args.length > 0 && args[0].length() > 0) {
             configFile = args[0];
         } else {
             configFile = "config.properties";
         }
-        // number of threads ()
+        // number of threads
         if (args.length > 1 && args[1].length() > 0) {
             USE_CPUs = Integer.parseInt(args[1]);
         } else {
@@ -88,24 +93,31 @@ public class ExperimentSetup {
             loader.loadCoordinates(properties.getProperty("fileCoordinates"));
         }
 
+        Set<Road> roadsToSkip = new HashSet<>();
+        if (properties.getProperty("roadsToSkip") != null) {
+            roadsToSkip = loader.loadRoadsToSkip(properties.getProperty("roadsToSkip"));
+            System.out.println("Partial results processing: " + roadsToSkip.size() + " road(s) should be skipped.");
+        }
+
         /*
          // For testing purpose to create subnet from source net
          NetReducer nr = new NetReducer(net);
          nr.reduce(8);
          */
+        
         // test if the net is connected at start
         if (net.isInOneComponent()) {
             System.out.println("The net is connected at the beginning.");
         } else {
             System.out.println("WARNING: The net is NOT connected at the beginning.");
             System.out.println("The net contains " + net.getNumOfComponents() + " components!");
-            System.exit(1);
         }
 
         // create collector of disconnection
         DisconnectionCollector disconnectionCollector = new DisconnectionCollector();
 
         // do the algorithm
+        LOGGER.addTime("startOfAlgorithm");
         Algorithm alg;
         switch (properties.getProperty("algorithm")) {
             case "simpa":
@@ -125,7 +137,8 @@ public class ExperimentSetup {
                         disconnectionCollector,
                         Integer.parseInt(properties.getProperty("numberOfComponents", "2")),
                         Boolean.parseBoolean(properties.getProperty("findOnlyAccurate")),
-                        true);
+                        true,
+                        roadsToSkip);
                 break;
             case "cycle-my":
                 alg = new AlgorithmCycle(
@@ -133,7 +146,8 @@ public class ExperimentSetup {
                         disconnectionCollector,
                         Integer.parseInt(properties.getProperty("numberOfComponents", "2")),
                         Boolean.parseBoolean(properties.getProperty("findOnlyAccurate")),
-                        false);
+                        false,
+                        roadsToSkip);
                 break;
             case "cycle-cut":
                 alg = new AlgorithmCycleCut(
@@ -181,40 +195,53 @@ public class ExperimentSetup {
 
         // test found disconnections        
         //disconnectionCollector.testPowerSet(true); // only for two components cut-sets
-        // evaluation of the disconnection
-        Evaluation evaluation = new Evaluation(net, disconnectionCollector);
-        System.out.println();
-        System.out.println("Evaluaton started (" + evaluation.getClass().getSimpleName() + ")");
-        System.out.println("------------------------------------------------------------------");
-        evaluation.start();
-        System.out.println("------------------------------------------------------------------");
-        System.out.println();
-        LOGGER.addTime("endOfEvaluation");
+        
+        // evaluation of disconnection
+        if (!properties.getProperty("evaluation").equals("none")) {
 
-        // sorting of the evaluation
-        disconnectionCollector.sort(Valuation.VARIANCE);
-        LOGGER.addTime("endOfSorting");
+            // evaluation of the disconnection
+            LOGGER.addTime("startOfEvaluation");
+            Evaluation evaluation = new Evaluation(net, disconnectionCollector);
+            System.out.println();
+            System.out.println("Evaluaton started (" + evaluation.getClass().getSimpleName() + ")");
+            System.out.println("------------------------------------------------------------------");
+            evaluation.start();
+            System.out.println("------------------------------------------------------------------");
+            System.out.println();
+            LOGGER.addTime("endOfEvaluation");
+
+            // sorting of the evaluation
+            LOGGER.addTime("startOfSorting");
+            disconnectionCollector.sort(Valuation.VARIANCE);
+            LOGGER.addTime("endOfSorting");
+
+            disconnectionCollector.displayDetailStatistics();
+            System.out.println();
+        }
 
         // display disconnections
-        disconnectionCollector.displayDetailStatistics();
-        System.out.println();
         disconnectionCollector.displayStatistics();
 
+        LOGGER.addTime("startOfStoringToFiles");
         ResultWriter resultWriter = new ResultWriter(disconnectionCollector, outputDirectory);
         resultWriter.storeResultsToFiles();
         System.out.println();
+        LOGGER.addTime("endOfStoringToFiles");
 
-        // let only specified number of the worst disconnections
-        disconnectionCollector.letOnlyFirst(Integer.parseInt(properties.getProperty("numberToAnalyze")));
+        if (properties.getProperty("evaluation").equals("deep")) {
+            LOGGER.addTime("startOfAnalysis");
+            // let only specified number of the worst disconnections
+            disconnectionCollector.letOnlyFirst(Integer.parseInt(properties.getProperty("numberToAnalyze")));
 
-        // do the detail analyze
-        GraphExport ge = new GraphExport(outputDirectory);
-        ge.export(net); // vizualize net
-        ge.exportDisconnections(net, disconnectionCollector, Integer.parseInt(properties.getProperty("numberToAnalyzeByRoad"))); // vizualize cut-sets
+            // do the detail analyze
+            GraphExport ge = new GraphExport(outputDirectory);
+            ge.export(net); // vizualize net
+            ge.exportDisconnections(net, disconnectionCollector, Integer.parseInt(properties.getProperty("numberToAnalyzeByRoad"))); // vizualize cut-sets
 
-        CutSetsAnalyzer csa = new CutSetsAnalyzer(net, disconnectionCollector, outputDirectory);
-        csa.doRoadsStatisctics();
-
+            CutSetsAnalyzer csa = new CutSetsAnalyzer(net, disconnectionCollector, outputDirectory);
+            csa.doRoadsStatisctics();
+            LOGGER.addTime("endOfAnalysis");
+        }
         System.out.println();
         LOGGER.endExperiment();
     } // end method main

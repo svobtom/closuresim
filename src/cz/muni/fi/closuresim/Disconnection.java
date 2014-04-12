@@ -29,7 +29,7 @@ public class Disconnection {
     }
 
     public Disconnection(Collection<Road> closedRoads) {
-        roads = new  HashSet<>();
+        roads = new HashSet<>();
         roads.addAll(closedRoads);
     }
 
@@ -83,14 +83,61 @@ public class Disconnection {
     public int getNumClosedRoads() {
         return roads.size();
     }
-    
+
     /**
-     * Get number of copmponents. 
-     * 
-     * @return number of components.
+     * Get precalculated number of components of this disconnection.
+     *
+     * @return number of components, 0 if number wasn't be computed before
      */
     public int getNumOfComponents() {
-        return (int) this.valuation.get(Valuation.COMPONENTS);
+        Number result = getEvaluation(Valuation.COMPONENTS);
+        if (result != null) {
+            return (int) result;
+        } else {
+            return 0;
+        }
+    }
+
+    /**
+     * Get precalculated variance of this disconnection.
+     *
+     * @return variance, 0 if variance wasn't be computed before
+     */
+    public double getVariance() {
+        Number result = getEvaluation(Valuation.VARIANCE);
+        if (result != null) {
+            return (double) result;
+        } else {
+            return 0;
+        }
+    }
+
+    /**
+     * Get precalculated remoteness components index.
+     *
+     * @return remoteness components index, 0 if variance wasn't be computed before
+     */
+    public int getRCI() {
+        Number result = getEvaluation(Valuation.REMOTENESS_COMPONENTS);
+        if (result != null) {
+            return (int) result;
+        } else {
+            return 0;
+        }
+    }
+
+    /**
+     * Get precalculated number of inhabitants of smaller component.
+     *
+     * @return umber of inhabitants, 0 if variance wasn't be computed before
+     */
+    public int getSmallerComponentInhabitants() {
+        Number result = getEvaluation(Valuation.THE_MOST_INHABITANTS_IN_THE_SMALLEST_COMPONENT);
+        if (result != null) {
+            return (int) result;
+        } else {
+            return 0;
+        }
     }
 
     @Override
@@ -125,6 +172,12 @@ public class Disconnection {
         this.valuation.put(v, num);
     }
 
+    /**
+     * Return numeric valuation.
+     *
+     * @param v numeric value, null if doesn't exist
+     * @return
+     */
     public Number getEvaluation(Valuation v) {
         return this.valuation.get(v);
     }

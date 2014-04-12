@@ -49,8 +49,8 @@ public class AlgCycleTest {
     @Test
     public void testRandomGraphs() {
 
-        int maxNumberOfNodes = 30;
-        int maxNumberOfCutSetRoads = 4;
+        int maxNumberOfNodes = 50;
+        int maxNumberOfCutSetRoads = 5;
         int numberOfCycles = 5;
 
         boolean complete = true;
@@ -161,7 +161,7 @@ public class AlgCycleTest {
         Algorithm alg = new AlgorithmCycle(result, dc, 2, false, true);
 
         alg.start(numberOfCutSetRoads);
-        System.out.println(dc.getNumberOfDisconnections());
+        //System.out.println(dc.getNumberOfDisconnections());
 
         boolean cutSetFound = false;
         for (Disconnection d : dc.getDisconnections()) {

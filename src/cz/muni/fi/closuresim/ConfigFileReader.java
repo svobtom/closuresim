@@ -12,7 +12,7 @@ import java.util.logging.Level;
 public class ConfigFileReader {
 
     private final String fileName;
-    private Properties properties;
+    private final Properties properties;
 
     ConfigFileReader(final String fileName) {
         this.fileName = fileName;
@@ -74,24 +74,32 @@ public class ConfigFileReader {
             }
         }
 
-        // number to analyze
-        try {
-            Integer.parseInt(properties.getProperty("numberToAnalyze"));
-        } catch (NumberFormatException ex) {
-            String msg = "Configuration file " + fileName + ": numberToAnalyze is not parsable to integer.";
-            ExperimentSetup.LOGGER.log(Level.SEVERE, msg, ex);
+        // method of evaluation
+         if (properties.getProperty("evaluation") == null || properties.getProperty("evaluation").length() < 1) {
+            String msg = "Configuration file " + fileName + ": evaluation isn't defined or it isn't in right format.";
+            ExperimentSetup.LOGGER.log(Level.SEVERE, msg);
             System.err.println(msg);
             System.exit(1);
         }
 
-        // number to analyze by road
-        try {
-            Integer.parseInt(properties.getProperty("numberToAnalyzeByRoad"));
-        } catch (NumberFormatException ex) {
-            String msg = "Configuration file " + fileName + ": numberToAnalyzeByRoad is not parsable to integer.";
-            ExperimentSetup.LOGGER.log(Level.SEVERE, msg, ex);
-            System.err.println(msg);
-            System.exit(1);
+            // number to analyze
+            try {
+                Integer.parseInt(properties.getProperty("numberToAnalyze"));
+            } catch (NumberFormatException ex) {
+                String msg = "Configuration file " + fileName + ": numberToAnalyze is not parsable to integer.";
+                ExperimentSetup.LOGGER.log(Level.SEVERE, msg, ex);
+                System.err.println(msg);
+                System.exit(1);
+            }
+
+            // number to analyze by road
+            try {
+                Integer.parseInt(properties.getProperty("numberToAnalyzeByRoad"));
+            } catch (NumberFormatException ex) {
+                String msg = "Configuration file " + fileName + ": numberToAnalyzeByRoad is not parsable to integer.";
+                ExperimentSetup.LOGGER.log(Level.SEVERE, msg, ex);
+                System.err.println(msg);
+                System.exit(1);
+            }
         }
     }
-}

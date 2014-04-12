@@ -27,8 +27,7 @@ public class Evaluation {
 
         // divide disconnections
         int num = 1;
-        for (Iterator<Disconnection> it = this.disconnectionCollector.getDisconnections().iterator(); it.hasNext();) {
-            Disconnection dis = it.next();
+        for (Disconnection dis : this.disconnectionCollector.getDisconnections()) {
             subCollectors[num % NUMBER_OF_THREADS].addDisconnection(dis);
             num++;
         }
@@ -38,6 +37,8 @@ public class Evaluation {
         
         // if no disconnection was in the collector don't start the threads
         if (this.disconnectionCollector.getNumberOfDisconnections() == 0) {
+            System.out.println("There is no disconnection to evaluate");
+            ExperimentSetup.LOGGER.info("There is no disconnection to evaluate");
             return;
         }
         
