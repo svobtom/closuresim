@@ -1,10 +1,9 @@
 package cz.muni.fi.closuresim;
 
-import java.util.Iterator;
 import java.util.logging.Level;
 
 /**
- * Evaluate found disconnection.
+ * Evaluate found disconnections.
  *
  * @author Tom
  */

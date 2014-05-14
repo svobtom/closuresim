@@ -39,6 +39,10 @@ public class Road {
 
     }
 
+    public Road(int id) {
+        this.id = id;
+    }
+
     /**
      * Copy road except the information about first and second nodes.
      *
@@ -88,7 +92,7 @@ public class Road {
             sn = second_node.getName();
         }
         //return this.name;
-        return id +"-"+ name + (closed ? " (closed" : " (open") + ", " + fn + " - " + sn + ")";
+        return id + "-" + name + (closed ? " (closed" : " (open") + ", " + fn + " - " + sn + ")";
     }
 
     /**

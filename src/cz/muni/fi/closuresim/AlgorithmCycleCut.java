@@ -5,7 +5,8 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.logging.Level;
 
 /**
- *
+ * Find disconnections by the spinning tree method.
+ * 
  * @author Tom
  */
 public class AlgorithmCycleCut implements Algorithm {
@@ -36,26 +37,6 @@ public class AlgorithmCycleCut implements Algorithm {
     @Override
     public void start(final int maxClosedRoads) {
 
-        /*
-         Node na = new Node();
-         na.setId(99);
-         na.setName("test uzel");
-         this.net.addNode(na);
-
-         Node naa = new Node();
-         naa.setId(98);
-         naa.setName("test2");
-         this.net.addNode(naa);
-
-         Road ra = new Road();
-         ra.setFirst_node(na);
-         ra.setSecond_node(naa);
-         ra.setId(90);
-         ra.setName("test cesta");
-         na.addRoad(ra);
-         naa.addRoad(ra);
-         this.net.addRoad(ra);
-         */
         // add all roads to the queue, threads are going to run over all roads in the queue
         queueOfRoads.addAll(net.getRoads());
 

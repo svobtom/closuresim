@@ -4,19 +4,17 @@ import java.util.Collections;
 import java.util.Set;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
 import java.util.logging.Level;
 
 /**
- * Class which leads finding disconnections.
+ * Manager of searching disconnections.
  *
  * @author Tom
  */
 public class AlgorithmSimpleParallel implements Algorithm {
 
     private static final int NUMBER_OF_THREADS = ExperimentSetup.USE_CPUs;
-    private Net net;
+    private final Net net;
     protected DisconnectionCollector disconnectionCollector;
     protected static Set<Road> oneRoadToDisconnect = Collections.synchronizedSet(new HashSet());
     protected static Set<Set<Road>> setRoadsToDisconnect = Collections.synchronizedSet(new HashSet());
@@ -24,10 +22,6 @@ public class AlgorithmSimpleParallel implements Algorithm {
     public AlgorithmSimpleParallel(Net net, DisconnectionCollector dl) {
         this.net = net;
         this.disconnectionCollector = dl;
-
-        AlgorithmSimpleParallelRunOne.disconnectionCollector = disconnectionCollector;
-        AlgorithmSimpleParallelRunTwo.disconnectionCollector = disconnectionCollector;
-        AlgorithmSimpleParallelRunThree.disconnectionCollector = disconnectionCollector;
 
         AlgorithmSimpleParallelRunnable.disconnectionCollector = disconnectionCollector;
     }
@@ -103,7 +97,6 @@ public class AlgorithmSimpleParallel implements Algorithm {
             // inicialize runnable by specific algorithm modification
             runnables[i] = new AlgorithmSimpleParallelRunnable(net);
 
-
             // set thread to its runnable and name it
             threads[i] = new Thread(runnables[i]);
             threads[i].setName(Integer.toString(i));
@@ -113,42 +106,7 @@ public class AlgorithmSimpleParallel implements Algorithm {
         for (int i = 0; i < NUMBER_OF_THREADS; i++) {
             runnables[i].prepare(numOfClosedRoads);
         }
-        
-        /*
-        List<RoadsSelection> roadsSelection = getNCombination(numOfClosedRoads);
 
-
-        // prideleni vlaknu mnoziny silnic, kterou bude pocitat
-        List<RoadsSelection> loadToThread = new LinkedList<>();
-
-        
-        int ij = 0;
-        for (Iterator<RoadsSelection> it = roadsSelection.iterator(); it.hasNext();) {
-            RoadsSelection rs = it.next();
-
-            runnables[ij % NUMBER_OF_THREADS].setLoad3(rs);
-            ij++;
-        }
-*/
-/*
-        if (numOfClosedRoads != 1) {
-            int roadsToOneThread = roadsSelection.size() / NUMBER_OF_THREADS;
-            int lastStart = 0;
-            for (int i = 0; i < NUMBER_OF_THREADS; i++) {
-                List<RoadsSelection> templist = new LinkedList<>();
-                templist.addAll(roadsSelection.subList(lastStart, lastStart + roadsToOneThread));
-
-                runnables[i].setLoad(roadsSelection.subList(lastStart, lastStart + roadsToOneThread));
-                lastStart = roadsToOneThread;
-            }
-        } else {
-            for (int i = 0; i < NUMBER_OF_THREADS; i++) {
-                runnables[i].setLoad2();
-
-            }
-        }
-*/
-        
         // start the threads
         for (int i = 0; i < NUMBER_OF_THREADS; i++) {
             threads[i].start();
@@ -164,100 +122,6 @@ public class AlgorithmSimpleParallel implements Algorithm {
         }
 
     }
-
-    /*
-    private List<RoadsSelection> getNCombination(int numOfClosedRoads) {
-        List<RoadsSelection> roadsSelection = new LinkedList<>();
-        switch (numOfClosedRoads) {
-            case 1:
-                for (Iterator<Road> it = net.getRoads().iterator(); it.hasNext();) {
-                    Road road = it.next();
-                    RoadsSelection rs = new RoadsSelection(1);
-                    rs.addRoad(road);
-                    roadsSelection.add(rs);
-                }
-                break;
-
-            case 2:
-                for (Iterator<Road> it1 = net.getRoads().iterator(); it1.hasNext();) {
-                    Road road1 = it1.next();
-                    RoadsSelection rs = new RoadsSelection(1);
-                    rs.addRoad(road1);
-
-                    // if road1 disconnect net
-                    if (disconnectionCollector.containDisconnection(rs)) {
-                        continue;
-                    }
-                    for (Iterator<Road> it2 = net.getRoads().iterator(); it2.hasNext();) {
-                        Road road2 = it2.next();
-
-                        // if road2 disconnect net
-                        RoadsSelection rs2 = new RoadsSelection(2);
-                        rs2.addRoad(road2);
-                        if (road2.equals(road1) || disconnectionCollector.containDisconnection(rs2)) {
-                            continue;
-                        }
-
-                        rs2.addRoad(road1);
-                        roadsSelection.add(rs2);
-                    }
-                }
-
-            case 3:
-                for (Iterator<Road> it1 = net.getRoads().iterator(); it1.hasNext();) {
-                    Road road1 = it1.next();
-                    RoadsSelection rs = new RoadsSelection(1);
-                    rs.addRoad(road1);
-
-                    // if road1 disconnect net
-                    if (disconnectionCollector.containDisconnection(rs)) {
-                        continue;
-                    }
-                    for (Iterator<Road> it2 = net.getRoads().iterator(); it2.hasNext();) {
-                        Road road2 = it2.next();
-
-                        // if road2 disconnect net
-                        RoadsSelection rs2 = new RoadsSelection(2);
-                        rs2.addRoad(road2);
-                        if (road2.equals(road1) || disconnectionCollector.containDisconnection(rs2)) {
-                            continue;
-                        }
-
-                        // if road1 and road2 disconenct
-                        rs2.addRoad(road1);
-                        if (disconnectionCollector.containDisconnection(rs2)) {
-                            continue;
-                        }
-
-
-                        for (Iterator<Road> it3 = net.getRoads().iterator(); it3.hasNext();) {
-                            Road road3 = it3.next();
-
-                            // if road3 disconnect net
-                            RoadsSelection rs3 = new RoadsSelection(3);
-                            rs3.addRoad(road3);
-                            if (road3.equals(road1) || road3.equals(road2) || disconnectionCollector.containDisconnection(rs3)) {
-                                continue;
-                            }
-
-                            RoadsSelection rs3_1 = new RoadsSelection(2);
-                            rs3_1.addRoads(road3, road1);
-                            RoadsSelection rs3_2 = new RoadsSelection(2);
-                            rs3_1.addRoads(road3, road2);
-                            if (disconnectionCollector.containDisconnection(rs3_1) || disconnectionCollector.containDisconnection(rs3_2)) {
-                                continue;
-                            }
-                            rs3.addRoad(road1);
-                            rs3.addRoad(road2);
-                            roadsSelection.add(rs3);
-                        }
-                    }
-                }
-
-        }
-        return roadsSelection;
-    }
-    */
 
     /**
      * Find all disconnection. Find all disconnection which are made by

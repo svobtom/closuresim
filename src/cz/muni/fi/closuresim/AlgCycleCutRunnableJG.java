@@ -1,15 +1,12 @@
 package cz.muni.fi.closuresim;
 
 import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 import java.util.logging.Level;
 import org.jgrapht.Graph;
 import org.jgrapht.alg.DijkstraShortestPath;
 import org.jgrapht.alg.KruskalMinimumSpanningTree;
-import org.jgrapht.alg.PrimMinimumSpanningTree;
 import org.jgrapht.alg.interfaces.MinimumSpanningTree;
 import org.jgrapht.graph.Multigraph;
 

@@ -10,7 +10,7 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Net consisted by nodes and edges.
+ * Representation of the network. 
  *
  * @author Tom
  */
@@ -207,7 +207,7 @@ public class Net {
         Iterator<Node> it = nodes.iterator();
         if (it.hasNext()) {
             Node n = it.next();
-            isInOneComponentRec(n);
+            markTheNode(n);
         }
 
         // check if all nodes are marked
@@ -221,19 +221,24 @@ public class Net {
 
     }
 
+    /**
+     * Check if the net is connected. It is faster because it doesn't set
+     * marking to zero at beginnig, but during checking cycle.
+     *
+     * @return true if the net is connected, false if isn't
+     */
     public boolean isInOneComponentFaster() {
 
         // marking of the nodes, choose first node
         Iterator<Node> it = nodes.iterator();
         if (it.hasNext()) {
             Node n = it.next();
-            isInOneComponentRec(n);
+            markTheNode(n);
         }
 
-        // check if all nodes are marked and zero the marking
+        // check if all nodes are marked and set to zero marking of nodes
         boolean result = true;
-        for (Iterator<Node> it2 = nodes.iterator(); it2.hasNext();) {
-            Node n = it2.next();
+        for (Node n : this.nodes) {
             if (n.getMarking() != 0) {
                 n.setMarking(0);
             } else {
@@ -241,7 +246,6 @@ public class Net {
             }
         }
         return result;
-
     }
 
     /**
@@ -249,18 +253,15 @@ public class Net {
      *
      * @param n node to mark
      */
-    private void isInOneComponentRec(final Node n) {
+    private void markTheNode(final Node n) {
         // test if the node is marked
         if (n.getMarking() != 1) {
-
             n.setMarking(1);
-            //final Set neighbours = n.getNeighbours();
-            for (Iterator<Node> it = n.getNeighbours().iterator(); it.hasNext();) {
-                //Node neighbour = it.next();
-                isInOneComponentRec(it.next());
-            }
 
-        } // else return;
+            for (Iterator<Node> it = n.getNeighbours().iterator(); it.hasNext();) {
+                markTheNode(it.next());
+            }
+        }
     }
 
     /**
@@ -644,7 +645,7 @@ public class Net {
      * @return List<Road> list of roads on the shortest path, if the path
      * doesn't exist the empty list is returned
      */
-    private List<Road> findShortestPath(final Node source, final Node target) {
+    protected List<Road> findShortestPath(final Node source, final Node target) {
         // path to return, empty yet
         final List<Road> listOfRoadsOnThePath = new LinkedList<>();
 
@@ -732,6 +733,58 @@ public class Net {
             } // end for
         } // end while
         return previousRoad;
+    }
+
+    /**
+     * Connects the road to the node. More roads can be connected to one node.
+     * However at most two nodes can be assign to the road.
+     *
+     * @param r road to connect
+     * @param n node to connect
+     * @return true if the connection was successful, false otherwise
+     */
+    public boolean connectRoadToNode(Road r, Node n) {
+        // test existing in the net
+        if (!this.nodes.contains(n) || !this.roads.contains(r)) {
+            throw new IllegalArgumentException("Node " + n + " or road " + r + " doesn't belong to the net " + this);
+        }
+
+        if (r.getFirst_node() == null) {
+            n.addRoad(r);
+            r.setFirst_node(n);
+            return true;
+        }
+        if (r.getSecond_node() == null) {
+            n.addRoad(r);
+            r.setSecond_node(n);
+            return true;
+        }
+        // road has been assigned to two nodes yet
+        return false;
+    }
+
+    /**
+     * Check if the set of closed roads make MINIMAL cut-set of the net. 
+     * 
+     * @return true if the roads make cut-set, false otherwise
+     */
+    public boolean isClosedRoadsMinimalCutSet() {
+
+        // check marking
+        for (Node node : this.nodes) {
+            if (node.getMarking() == 0) {
+                ExperimentSetup.LOGGER.warning("A node wasn't marked");
+                throw new IllegalArgumentException("A node wasn't marked");
+            }
+        }
+
+        for (Road road : this.roads) {
+            if (road.isClosed() && road.getFirst_node().getMarking() == road.getSecond_node().getMarking()) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
 }

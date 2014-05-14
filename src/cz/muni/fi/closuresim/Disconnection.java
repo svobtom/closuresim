@@ -8,7 +8,8 @@ import java.util.HashSet;
 import java.util.Map;
 
 /**
- *
+ * Class representing set of roads in the net which can make disconnection.
+ * 
  * @author Tom
  */
 public class Disconnection {

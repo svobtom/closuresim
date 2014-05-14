@@ -53,6 +53,10 @@ public class EvaluationRunnable implements Runnable {
         }
         disconnection.setEvaluation(Valuation.COMPONENTS, numOfComp);
 
+        // check minimal cut-set
+        final boolean cutSet = this.net.isClosedRoadsMinimalCutSet();
+        disconnection.setEvaluation(Valuation.IS_MINIMAL_CUT_SET, cutSet ? 1 : 0);
+        
         // variance
         final double variance = this.net.getValueOfBadness(numOfComp);
         disconnection.setEvaluation(Valuation.VARIANCE, variance);

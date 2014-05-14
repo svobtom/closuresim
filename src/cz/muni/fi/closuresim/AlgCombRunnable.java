@@ -3,33 +3,32 @@ package cz.muni.fi.closuresim;
 import java.util.List;
 import java.util.Queue;
 import java.util.ArrayList;
-import java.util.Iterator;
+import java.util.HashSet;
 import java.util.LinkedList;
+import java.util.Set;
 import org.paukov.combinatorics.Generator;
 import org.paukov.combinatorics.ICombinatoricsVector;
 
 /**
+ * Algorithm combinatoric runnable.
  *
  * @author Tom
  */
 public class AlgCombRunnable implements Runnable {
 
-    private static int minDistanceOfClosedRoads;
-    private Net net;
-    private DisconnectionCollector disconnectionCollector;
-    private Queue<ICombinatoricsVector<Road>> fronta = new LinkedList<>();
+    private final Net net;
+    private final DisconnectionCollector disconnectionCollector;
+    private final Set<Disconnection> disconnections;
+    private final Queue<ICombinatoricsVector<Road>> fronta = new LinkedList<>();
     private Generator<Road> generator;
     private int startIndex;
     private int stopIndex;
-    private static final Object LOCKER = new Object();
+     private static int minDistanceOfClosedRoads;
 
     public AlgCombRunnable(Net net, DisconnectionCollector disconnectionCollector) {
         this.net = net.clone();
         this.disconnectionCollector = disconnectionCollector;
-    }
-
-    public void prepare(List<ICombinatoricsVector<Road>> workout) {
-        //this.fronta = new LinkedList<>(workout);
+        this.disconnections = new HashSet<>();
     }
 
     void prepare(Generator<Road> gen, final int startIndex, final int stopIndex) {
@@ -43,74 +42,46 @@ public class AlgCombRunnable implements Runnable {
         // assign workout to this thread
         this.fronta.addAll(this.generator.generateObjectsRange(startIndex, stopIndex));
 
-
         // start testing
-        test();
+        testCombinations();
+        
+        // store disconnections
+        this.disconnectionCollector.addDisconnections(disconnections);
     }
 
-    public void test() {
+    public void testCombinations() {
 
-        //while (!fronta.isEmpty()) {
-        ICombinatoricsVector<Road> iCombinatoricsVector;
-        while ((iCombinatoricsVector = fronta.poll()) != null) {
-            //ICombinatoricsVector<Road> iCombinatoricsVector = fronta.poll();
+        while (!this.fronta.isEmpty()) {
+            ICombinatoricsVector<Road> iCombinatoricsVector = this.fronta.poll();
+            if (iCombinatoricsVector != null) {
 
-            /*
-             if (iCombinatoricsVector == null) {
-             continue;
-             }
-             */
+                // filtering
+                // if (disconnectionCollector.make1RDisconnection(listOfroadsSourceNet)) { // || disconnectionCollector.make2RDisconnection(listOfroadsSourceNet) || !net.distanceBetweenRoadsIsAtLeast(2, listOfroadsSourceNet)
+                // if (minDistanceOfClosedRoads != 0 && !net.distanceBetweenRoadsIsAtLeast(minDistanceOfClosedRoads, listOfroadsSourceNet)) {                
+                // continue;
+                List<Road> listOfroadsSourceNet = iCombinatoricsVector.getVector();
+                List<Road> listOfroads = new ArrayList<>(listOfroadsSourceNet.size());
 
-            List<Road> listOfroadsSourceNet = iCombinatoricsVector.getVector();
+                // get roads from net of this thread
+                for (Road road : listOfroadsSourceNet) {
+                    listOfroads.add(this.net.getRoad(road.getId()));
+                }
 
+                // close all roads
+                for (Road road : listOfroads) {
+                    road.close();
+                }
 
-            //if (disconnectionCollector.make1RDisconnection(listOfroadsSourceNet)) { // || disconnectionCollector.make2RDisconnection(listOfroadsSourceNet) || !net.distanceBetweenRoadsIsAtLeast(2, listOfroadsSourceNet)
-            //    continue;
-            //}
+                if (!net.isInOneComponentFaster()) {
+                    Disconnection dis = new Disconnection(listOfroads);
+                    disconnections.add(dis);
+                }
 
-            /*
-            if (minDistanceOfClosedRoads != 0 && !net.distanceBetweenRoadsIsAtLeast(minDistanceOfClosedRoads, listOfroadsSourceNet)) {
-                continue;
+                // open all roads
+                for (Road road : listOfroads) {
+                    road.open();
+                }
             }
-            */
-
-
-            List<Road> listOfroads = new ArrayList<>(listOfroadsSourceNet.size());
-
-            for (Road road : listOfroadsSourceNet) {
-                // pro kazdou silnici v pridelenych silnicich pro toto vlakno
-                // ziskej jeji id a podle id vyhledej silnici v klonovane siti a tu umisti do seznamu vlakna
-                listOfroads.add(this.net.getRoad(road.getId()));
-            }
-
-            //RoadsSelection rs = new RoadsSelection();
-            //rs.addRoads(listOfroads);
-
-            //System.out.println(Thread.currentThread().getName() + ": closing road " + rs + ".");
-            //rs.closeAllRoads();
-
-            // close all roads
-            for (Iterator<Road> it = listOfroads.iterator(); it.hasNext();) {
-                Road road = it.next();
-                road.close();
-            }
-
-            //System.out.println(Thread.currentThread().getName() + ": closed road " + rs + ".");
-            if (!net.isInOneComponentFaster()) {
-                //System.out.println(Thread.currentThread().getName() + ": Disconnected after close road " + rs + ".");
-                //System.out.print(".");
-                Disconnection dis = new Disconnection(listOfroads);
-                disconnectionCollector.addDisconnection(dis);
-            }
-            //System.out.println();
-            //rs.openAllRoads();
-
-            // open all roads
-            for (Iterator<Road> it = listOfroads.iterator(); it.hasNext();) {
-                Road road = it.next();
-                road.open();
-            }
-
         }
     }
 
@@ -123,5 +94,5 @@ public class AlgCombRunnable implements Runnable {
     public static void setMinDistanceOfClosedRoads(final int num) {
         minDistanceOfClosedRoads = num;
     }
-    
+
 }

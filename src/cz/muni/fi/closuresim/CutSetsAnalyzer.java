@@ -5,7 +5,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Analyze cut-sets stored in Disconnection collector
+ * Detail analyze cut-sets stored in Disconnection collector
  * 
  * @author Tom
  */
@@ -22,7 +22,7 @@ class CutSetsAnalyzer {
     }
 
     /**
-     * 
+     * Count occurences of roads in disconnections.
      */
     public void doRoadsStatisctics() {
 

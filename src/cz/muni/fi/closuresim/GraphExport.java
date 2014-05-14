@@ -1,8 +1,5 @@
 package cz.muni.fi.closuresim;
 
-import com.tinkerpop.blueprints.Direction;
-import com.tinkerpop.blueprints.*;
-
 import com.tinkerpop.blueprints.impls.tg.TinkerGraph;
 import com.tinkerpop.blueprints.Graph;
 import com.tinkerpop.blueprints.Vertex;
@@ -23,7 +20,8 @@ import java.util.Random;
 import java.util.logging.Level;
 
 /**
- *
+ * Exports files in GraphML format. 
+ * 
  * @author Tom
  */
 public class GraphExport {
@@ -200,11 +198,11 @@ public class GraphExport {
             case 2:
                 switch (part) {
                     case "r":
-                        return 11;
+                        return 48;
                     case "g":
-                        return 97;
+                        return 134;
                     case "b":
-                        return 164;
+                        return 201;
                 }
             case 3:
                 switch (part) {

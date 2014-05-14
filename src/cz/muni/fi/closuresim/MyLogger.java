@@ -8,11 +8,10 @@ import java.util.logging.FileHandler;
 import java.util.logging.Handler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import java.util.logging.SimpleFormatter;
 import org.apache.commons.io.FileUtils;
 
 /**
- * Descendant of Java Logger. Special behavior added.
+ * Descendant of Java Logger. Added special behavior.
  *
  * @author Tom
  */
@@ -20,27 +19,28 @@ public class MyLogger extends Logger {
 
     private final File outputDirectory;
     private final String filename = "experiment.log";
-    private Map<String, Long> times = new HashMap<>();
+    private final Map<String, Long> times = new HashMap<>();
 
     /**
      * Create specific logger.
      *
-     * @param fileName name of file to logging
+     * @param outputDirectory name of output directory
      */
     public MyLogger(File outputDirectory) {
         super("cz.muni.fi.closuresim", null);
 
         this.outputDirectory = outputDirectory;
+
         try {
             this.setUseParentHandlers(false); // don't log to console
             Handler handler = new FileHandler(filename); // log to the file
             //Handler handlerSimple = new FileHandler(fileName + "-simple.log"); // log to the file
-            this.addHandler(handler);
             //handlerSimple.setFormatter(new SimpleFormatter());
+            this.addHandler(handler);
             //this.addHandler(handlerSimple);
         } catch (IOException ex) {
             this.setUseParentHandlers(true);
-            this.log(Level.SEVERE, "Can't open file to logging", ex);
+            super.log(Level.SEVERE, "Can't open file to logging", ex);
         }
     }
 
@@ -53,6 +53,7 @@ public class MyLogger extends Logger {
 
         super.log(level, msg);
 
+        // severe error occured
         if (level.equals(Level.SEVERE)) {
             System.exit(1);
         }
@@ -64,8 +65,13 @@ public class MyLogger extends Logger {
         if (level.equals(Level.SEVERE) || level.equals(Level.WARNING)) {
             System.err.println(level.toString() + ": " + msg);
         }
-        
+
         super.log(level, msg, thrown);
+
+        // severe error occured
+        if (level.equals(Level.SEVERE)) {
+            System.exit(1);
+        }
     }
 
     /**
@@ -106,12 +112,11 @@ public class MyLogger extends Logger {
     }
 
     /**
-     * Add time spot.
+     * Add time shot.
      *
-     * @param name name of the point.
-     * @param value
+     * @param name the name of the point.
      */
-    protected void addTime(final String name) {
+    protected void addTime(String name) {
         this.times.put(name, System.currentTimeMillis());
         super.log(Level.INFO, name);
     }
@@ -120,7 +125,7 @@ public class MyLogger extends Logger {
      * Get stored time by logger.
      *
      * @param name name of time point
-     * @return
+     * @return stored time in milliseconds if it exists, 0 otherwise
      */
     private long getTime(String name) {
         Long result = this.times.get(name);

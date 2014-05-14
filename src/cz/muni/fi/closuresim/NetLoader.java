@@ -3,30 +3,24 @@ package cz.muni.fi.closuresim;
 import java.io.*;
 import java.nio.charset.Charset;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.StringTokenizer;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.FileFilterUtils;
-import org.apache.commons.io.filefilter.IOFileFilter;
 
 /**
- * Manage loading network from files.
+ * Manage loading network from file/files.
  *
  * @author Tom
  */
 public class NetLoader {
 
-    /**
-     * New loaded net
-     */
     final private Net net;
 
     public NetLoader() {
@@ -178,6 +172,7 @@ public class NetLoader {
     }
 
     /**
+     * Get number of loaded nodes.
      *
      * @return number of nodes
      */
@@ -186,6 +181,7 @@ public class NetLoader {
     }
 
     /**
+     * Get number of loaded roads.
      *
      * @return number of roads
      */
@@ -310,10 +306,6 @@ public class NetLoader {
                             //System.out.println(" (" + roadsString + ") === ");
                         }
 
-                        // for (int j = 0; j < roads_elements.length; j++) {
-                        //String string = roads_elements[j];
-                        //System.out.println(" (" + string + ") ");
-                        //String[] oneRoad = string.split(";");
                         String[] oneRoad = roadsString.split(";");
 
                         for (Iterator<Node> it = nodes.iterator(); it.hasNext();) {
@@ -348,10 +340,8 @@ public class NetLoader {
                             }
                         }
 
-                        //}
                     }
 
-                    //String[] roads_elements = elements[1].split(" ");
                 }
             }
         } catch (FileNotFoundException ex) {
@@ -360,9 +350,14 @@ public class NetLoader {
             ExperimentSetup.LOGGER.log(Level.SEVERE, "IO exception occur.", ex);
         }
 
-        // System.out.println(roads.toString());
     }
 
+    /**
+     * Create file in csv format from given list of nodes.
+     *
+     * @param fileName name of new file
+     * @param nodes list of nodes
+     */
     public void creatNodesFile(String fileName, List<Node> nodes) {
         try {
             FileWriter writer = new FileWriter(fileName);
@@ -396,6 +391,12 @@ public class NetLoader {
 
     }
 
+    /**
+     * Create file in csv format from given list of roads.
+     *
+     * @param fileName name of new file
+     * @param roads list of roads
+     */
     public void creatRoadsFile(String fileName, List<Road> roads) {
         try {
             FileWriter writer = new FileWriter(fileName);
@@ -426,6 +427,11 @@ public class NetLoader {
 
     }
 
+    /**
+     * Load geographical coordinates from special file.
+     *
+     * @param fileName name fo the file
+     */
     public void loadCoordinates(String fileName) {
         try {
             InputStream fis = new FileInputStream(fileName);
@@ -457,7 +463,7 @@ public class NetLoader {
     }
 
     /**
-     * Load roads which should be skipped.
+     * Load roads which should be skipped during algorithm.
      *
      * @param path path to directory with processed roads files
      * @return set of roads which should be skipped
@@ -475,13 +481,6 @@ public class NetLoader {
 
             String roadName = file.getName().replace(".csv", "");
 
-            /*
-             // Do the road exist in this net?
-             if (!this.net.containsRoad(roadName)) {
-             ExperimentSetup.LOGGER.log(Level.WARNING, "The net doesn't contain road with name " + roadName + " which should be skiped");
-             continue;
-             }
-             */
             Road newRoad = this.net.getRoad(roadName);
 
             // Do the road exist in this net?

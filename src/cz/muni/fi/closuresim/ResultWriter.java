@@ -11,7 +11,8 @@ import java.util.logging.Level;
 import org.apache.commons.io.FileUtils;
 
 /**
- *
+ * Manage storing results to the specified directory.
+ * 
  * @author Tom
  */
 public class ResultWriter {
@@ -29,6 +30,13 @@ public class ResultWriter {
         od.mkdir();
     }
 
+    /**
+     * Prepare directory to store the results. If it already exists,
+     * it is added by suffix "-old" at first. 
+     * 
+     * @param outputDirectory
+     * @param configFile 
+     */
     public static void prepareOutputDirectory(File outputDirectory, String configFile) {
         // prepareDirectory
         if (outputDirectory.exists()) {

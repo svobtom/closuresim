@@ -23,6 +23,11 @@ public class Node {
         roads = new HashSet<>();
     }
 
+    public Node(int id) {
+        this.id = id;
+        roads = new HashSet<>();
+    }
+
     /**
      * Copy node without information about roads.
      *
@@ -163,8 +168,8 @@ public class Node {
 
     /**
      * Increase number of inhabitants by given value.
-     * 
-     * @param increase 
+     *
+     * @param increase
      */
     public void addInhabitants(int increase) {
         this.numOfInhabitants += increase;

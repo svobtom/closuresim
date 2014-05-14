@@ -12,12 +12,19 @@ import java.util.SortedSet;
 import java.util.TreeSet;
 
 /**
+ * Disconnection collector stores all disconnections and manipulates with them.
  *
  * @author Tom
  */
 public class DisconnectionCollector {
-    /** Disconnections */
+
+    /**
+     * Disconnections
+     */
     private Set<Disconnection> disconnections;
+    /**
+     * Chosen comparator
+     */
     private Comparator comparator;
 
     public DisconnectionCollector() {
@@ -27,15 +34,21 @@ public class DisconnectionCollector {
     }
 
     /**
-     * Add one disconnections to the set.
+     * Add one disconnection.
      *
-     * @param dis
-     * @return
+     * @param dis disconnection to add
+     * @return true if this collector did not already contain the disconnection
      */
     public boolean addDisconnection(Disconnection dis) {
         return disconnections.add(dis);
     }
 
+    /**
+     * Add all disconnections of the collection.
+     *
+     * @param dis
+     * @return true if the collector changed
+     */
     public boolean addDisconnections(Collection<Disconnection> dis) {
         return this.disconnections.addAll(dis);
     }
@@ -227,7 +240,7 @@ public class DisconnectionCollector {
             System.out.print("=============");
         }
         System.out.println();
-        
+
         // write data
         for (int i = 0; i < maxClosedRoads; i++) {
             System.out.print((i + 1) + "\t|| ");
@@ -276,11 +289,35 @@ public class DisconnectionCollector {
         this.disconnections = newSet;
     }
 
-    public void testPowerSet() {
-        testPowerSet(false);
+    /**
+     * Get number of disconnections which do not form minimal cut-set
+     * of the net.
+     * 
+     * @return 
+     */
+    public int getNumberOfNotMinimalCutSetDisconnections() {
+        int result = 0;
+        for (Disconnection disconnection : disconnections) {
+            Number number = disconnection.getEvaluation(Valuation.IS_MINIMAL_CUT_SET);
+            if (number == null) {
+                throw new IllegalArgumentException("Not evaluated by: IS_MINIMAL_CUT_SET");
+            }
+            int num = (Integer) number;
+            if (num != 1) {
+                result++;
+            }
+        }
+        return result;
     }
 
-    public void testPowerSet(boolean removeCollision) {
+    /**
+     * Find disconnections in where are unnecessary roads. Only for two
+     * components.
+     *
+     * @param removeCollision if true disconnections with unnecessary roads are
+     * removed
+     */
+    public void findUnnecessaryDisconnections(boolean removeCollision) {
 
         int numberOfCollision = 0;
         Set<Disconnection> toRemove = new HashSet<>();
@@ -288,7 +325,7 @@ public class DisconnectionCollector {
         for (Iterator<Disconnection> it = disconnections.iterator(); it.hasNext();) {
             Disconnection disconnection = it.next();
 
-            Set<Set<Road>> ssr = new HashSet<>();
+            Set<Set<Road>> ssr;
             ssr = powerSet(disconnection.getRoads());
             ssr.remove(disconnection.getRoads());
 
@@ -297,9 +334,9 @@ public class DisconnectionCollector {
 
                 Disconnection tempDis = new Disconnection(setRoads);
                 if (this.disconnections.contains(tempDis)) {
-                    System.err.println("Should not happend:");
-                    System.err.println("Found " + disconnection + ",");
-                    System.err.println("but   " + tempDis + "found too.");
+                    //System.err.println("Should not happend:");
+                    //System.err.println("Found " + disconnection + ",");
+                    //System.err.println("but   " + tempDis + "found too.");
                     numberOfCollision++;
                     if (removeCollision) {
                         toRemove.add(disconnection);

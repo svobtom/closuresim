@@ -38,7 +38,7 @@ public class ExperimentSetup {
 
     /**
      * The main method
-     * 
+     *
      * @param args arguments from command line
      */
     public static void main(String[] args) {
@@ -99,12 +99,6 @@ public class ExperimentSetup {
             System.out.println("Partial results processing: " + roadsToSkip.size() + " road(s) should be skipped.");
         }
 
-        /*
-         // For testing purpose to create subnet from source net
-         NetReducer nr = new NetReducer(net);
-         nr.reduce(8);
-         */
-        
         // test if the net is connected at start
         if (net.isInOneComponent()) {
             System.out.println("The net is connected at the beginning.");
@@ -127,8 +121,6 @@ public class ExperimentSetup {
                 alg = new AlgorithmCombinatoric(
                         net,
                         disconnectionCollector,
-                        properties.getProperty("startOnCombinationsNo"),
-                        properties.getProperty("startOnCombinationsNo"),
                         Integer.parseInt(properties.getProperty("minDistanceOfClosedRoads", "1")));
                 break;
             case "cycle":
@@ -173,8 +165,8 @@ public class ExperimentSetup {
                         net,
                         disconnectionCollector,
                         properties.getProperty("resultFile"),
-                        Integer.parseInt(ExperimentSetup.properties.getProperty("startOnCombinationsNo")),
-                        Integer.parseInt(ExperimentSetup.properties.getProperty("stopOnCombinationsNo")));
+                        Integer.parseInt(ExperimentSetup.properties.getProperty("startOnLine")),
+                        Integer.parseInt(ExperimentSetup.properties.getProperty("stopOnLine")));
                 break;
             case "test":
                 alg = new AlgorithmTest(
@@ -194,8 +186,8 @@ public class ExperimentSetup {
         LOGGER.addTime("endOfAlgorithm");
 
         // test found disconnections        
-        //disconnectionCollector.testPowerSet(true); // only for two components cut-sets
-        
+        disconnectionCollector.findUnnecessaryDisconnections(false); // only for two components cut-sets
+
         // evaluation of disconnection
         if (!properties.getProperty("evaluation").equals("none")) {
 
@@ -209,6 +201,11 @@ public class ExperimentSetup {
             System.out.println("------------------------------------------------------------------");
             System.out.println();
             LOGGER.addTime("endOfEvaluation");
+
+            // find not minimal cut-sets
+            System.out.println(
+                    "Not minimal cut-sets = " + disconnectionCollector.getNumberOfNotMinimalCutSetDisconnections()
+            );
 
             // sorting of the evaluation
             LOGGER.addTime("startOfSorting");

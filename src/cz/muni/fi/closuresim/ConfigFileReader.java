@@ -6,7 +6,8 @@ import java.util.Properties;
 import java.util.logging.Level;
 
 /**
- *
+ * Load and verify values from configuration file. 
+ * 
  * @author Tom
  */
 public class ConfigFileReader {
@@ -14,11 +15,21 @@ public class ConfigFileReader {
     private final String fileName;
     private final Properties properties;
 
-    ConfigFileReader(final String fileName) {
+    /**
+     * Create instance of ConfigFileReader.
+     * 
+     * @param fileName name of file with configuration
+     */
+    public ConfigFileReader(final String fileName) {
         this.fileName = fileName;
         this.properties = new Properties();
     }
 
+    /**
+     * Load values from the file.
+     * 
+     * @return loaded properties
+     */
     public Properties loadConfiguration() {
         try {
             this.properties.load(new FileInputStream(this.fileName));
@@ -34,6 +45,9 @@ public class ConfigFileReader {
         return this.properties;
     }
 
+    /**
+     * Basic verication of the properties. 
+     */
     private void validationOfProperties() {
 
         // file with nodes
