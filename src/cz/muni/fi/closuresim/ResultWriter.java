@@ -12,7 +12,7 @@ import org.apache.commons.io.FileUtils;
 
 /**
  * Manage storing results to the specified directory.
- * 
+ *
  * @author Tom
  */
 public class ResultWriter {
@@ -31,11 +31,11 @@ public class ResultWriter {
     }
 
     /**
-     * Prepare directory to store the results. If it already exists,
-     * it is added by suffix "-old" at first. 
-     * 
+     * Prepare directory to store the results. If it already exists, it is added
+     * by suffix "-old" at first.
+     *
      * @param outputDirectory
-     * @param configFile 
+     * @param configFile
      */
     public static void prepareOutputDirectory(File outputDirectory, String configFile) {
         // prepareDirectory
@@ -82,22 +82,24 @@ public class ResultWriter {
             }
 
             // interate over all results
-            for (Iterator<Disconnection> it = disconnections.iterator(); it.hasNext();) {
-                Disconnection disconnection = it.next();
+            for (Disconnection disconnection : disconnections) {
 
                 outAll.write("");
+
                 // iterate over all closed roads in the disconnection
-                for (Iterator<Road> it1 = disconnection.getRoads().iterator(); it1.hasNext();) {
-                    Road r = it1.next();
+                for (Road r : disconnection.getSortedRoads()) {
+
                     // write to right result-n.csv file
                     out[disconnection.getNumClosedRoads() - 1].write(r.getName() + ";");
                     // write to all result file
                     outAll.write(r.getName() + ";");
+
                 }
+
                 outAll.write("VAL;");
 
                 final double roundedVariance = (double) Math.round(disconnection.getVariance() * 100) / 100;
-                
+
                 out[disconnection.getNumClosedRoads() - 1].write(Integer.toString(disconnection.getNumOfComponents()) + ";");
                 out[disconnection.getNumClosedRoads() - 1].write(Double.toString(roundedVariance) + ";");
                 out[disconnection.getNumClosedRoads() - 1].write(Integer.toString(disconnection.getSmallerComponentInhabitants()) + ";");
@@ -120,7 +122,7 @@ public class ResultWriter {
             System.out.println("Result was stored to files results-n.csv, where n is number of closed roads. ");
 
         } catch (IOException ex) {
-            ExperimentSetup.LOGGER.log(Level.SEVERE, null, ex);
+            ExperimentSetup.LOGGER.log(Level.SEVERE, "Error during storing result files.", ex);
         }
 
     }
@@ -167,9 +169,17 @@ public class ResultWriter {
 
         } catch (IOException ex) {
             ExperimentSetup.LOGGER.log(Level.SEVERE, "Error writing partial result to file", ex);
-            System.exit(1);
         }
-
+        
     }
 
+    public void deleteTempFiles() {
+        File f1 = new File(outputDirectory, "partial-results");
+
+        try {
+            FileUtils.deleteDirectory(f1);
+        } catch (IOException ex) {
+            ExperimentSetup.LOGGER.log(Level.WARNING, "Temporary files weren't deleted.", ex);
+        }
+    }
 }

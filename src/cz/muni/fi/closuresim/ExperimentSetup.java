@@ -186,8 +186,7 @@ public class ExperimentSetup {
         LOGGER.addTime("endOfAlgorithm");
 
         // test found disconnections        
-        disconnectionCollector.findUnnecessaryDisconnections(false); // only for two components cut-sets
-
+        //disconnectionCollector.findUnnecessaryDisconnections(false); // only for two components cut-sets
         // evaluation of disconnection
         if (!properties.getProperty("evaluation").equals("none")) {
 
@@ -202,10 +201,24 @@ public class ExperimentSetup {
             System.out.println();
             LOGGER.addTime("endOfEvaluation");
 
-            // find not minimal cut-sets
-            System.out.println(
-                    "Not minimal cut-sets = " + disconnectionCollector.getNumberOfNotMinimalCutSetDisconnections()
-            );
+            // filter not minimal cut-sets
+            LOGGER.addTime("startOfFiltering");
+            final int shouldFiltering = Integer.parseInt(properties.getProperty("filteringNoMinimalCS", "0"));
+            if (shouldFiltering == 1 || shouldFiltering == 2) {
+
+                int foundNcs = -1;
+                switch (shouldFiltering) {
+                    case 1:
+                        foundNcs = disconnectionCollector.notMinimalCutSets(false);
+                        break;
+                    case 2:
+                        foundNcs = disconnectionCollector.notMinimalCutSets(true);
+                        break;
+                }
+
+                System.out.println("No minimal cut-sets = " + foundNcs);
+            }
+            LOGGER.addTime("endOfFiltering");
 
             // sorting of the evaluation
             LOGGER.addTime("startOfSorting");
@@ -239,6 +252,10 @@ public class ExperimentSetup {
             csa.doRoadsStatisctics();
             LOGGER.addTime("endOfAnalysis");
         }
+        
+        // delete temporary files and parcial results
+        resultWriter.deleteTempFiles();
+        
         System.out.println();
         LOGGER.endExperiment();
     } // end method main

@@ -32,11 +32,12 @@ public class NetLoader {
      *
      * @param fileCity path to the file with cities
      * @param fileRoad path to the file with roads
-     * @return Net - loaded network
+     * @return loaded network
      */
     public Net load(final String fileCity, final String fileRoad) {
         loadNodes(fileCity);
         loadRoads(fileRoad);
+
         return net;
     }
 
@@ -44,10 +45,11 @@ public class NetLoader {
      * Load the network using the one file format.
      *
      * @param oneFile path to the file in format of CDV
-     * @return Net - loaded network
+     * @return loaded network
      */
     public Net load(final String oneFile) {
         convertFromFormatCDV(oneFile);
+
         return net;
     }
 
@@ -149,15 +151,6 @@ public class NetLoader {
 
                     r.setNodes(start_node, end_node);
 
-                    if (this.net.containsRoad(name)) {
-                        System.out.println("POOOOOOOOOOOOOOOOZOOOOR");
-
-                        Road tempRoad = this.net.getRoad(name);
-                        System.out.println("N: " + tempRoad);
-                        System.out.println("S: " + r);
-                        System.out.println();
-                    }
-
                     start_node.addRoad(r);
                     end_node.addRoad(r);
 
@@ -195,7 +188,7 @@ public class NetLoader {
      * @param oneFile path to the file in CDV format
      */
     private void convertFromFormatCDV(final String oneFile) {
-        // create structure where will be load the data from source file
+        // create structures for loaded data
         List<Node> nodes = new LinkedList();
         List<Road> roads = new LinkedList();
 
@@ -271,9 +264,11 @@ public class NetLoader {
             InputStream fis = new FileInputStream(fileName);
             BufferedReader br = new BufferedReader(new InputStreamReader(fis, Charset.forName("UTF-8")));
 
-            String line;
+            // first road id
             int newRoadID = 1;
+
             // get lines from file
+            String line;
             while ((line = br.readLine()) != null) {
                 String[] elements = line.split("  ", 2);
 
@@ -281,60 +276,55 @@ public class NetLoader {
                 if (elements.length >= 2) {
 
                     String[] node_elements = elements[0].split(";");
-                    String startNodeName = node_elements[0];
-                    Node startNode = new Node();
-                    for (Iterator<Node> it = nodes.iterator(); it.hasNext();) {
-                        Node n = it.next();
-                        if (n.getName().equals(startNodeName)) {
-                            startNode = n;
+                    String newNodeName = node_elements[0];
+                    Node newNode = new Node();
+
+                    // searching new node in recently loaded nodes
+                    for (Node oldNode : nodes) {
+                        if (oldNode.getName().equals(newNodeName)) {
+                            newNode = oldNode;
                         }
                     }
 
                     String roadsString;
                     StringTokenizer st = new StringTokenizer(elements[1], " ");
-                    //int poc = 0;
                     while (st.hasMoreElements()) {
                         roadsString = (String) st.nextElement();
 
-                        if (roadsString.split(";").length >= 4) {
-
-                            //String string = roadsString[poc];
-                            //System.out.println(" (" + roadsString + ") --- ");
-                            //poc++;
-                        } else {
-                            roadsString += " " + (String) st.nextElement();
-                            //System.out.println(" (" + roadsString + ") === ");
+                        // test if there is enought semicolons
+                        if (roadsString.split(";").length < 4) {
+                            // if not append rest of the string
+                            roadsString += "  " + (String) st.nextElement();
                         }
 
                         String[] oneRoad = roadsString.split(";");
 
-                        for (Iterator<Node> it = nodes.iterator(); it.hasNext();) {
-                            Node n = it.next();
-                            if (n.getName().equals(oneRoad[0])) {
-                                Road r = new Road();
+                        for (Node n : nodes) {
 
-                                r.setName(oneRoad[2].replace("\t", " "));
-                                r.setFirst_node(startNode); //r.setFirstNode(startNodeID);
-                                r.setSecond_node(n);//r.setSecondNode(n.getId());
+                            if (n.getName().equals(oneRoad[0])) {
+                                Road newRoad = new Road();
+
+                                newRoad.setName(oneRoad[2].replace("\t", " "));
+                                newRoad.setFirst_node(newNode);
+                                newRoad.setSecond_node(n);
                                 if (oneRoad.length > 3) {
-                                    r.setLength(Integer.parseInt(oneRoad[3]));//r.setDistance(Integer.parseInt(oneRoad[3]));
+                                    newRoad.setLength(Integer.parseInt(oneRoad[3]));
                                 }
                                 if (oneRoad.length > 4) {
-                                    r.setTime((int) Double.parseDouble(oneRoad[4]));
+                                    newRoad.setTime((int) Double.parseDouble(oneRoad[4]));
                                 }
 
                                 // test if the road has been loaded yet
                                 boolean isThereYet = false;
-                                for (Iterator<Road> it2 = roads.iterator(); it2.hasNext();) {
-                                    Road r2 = it2.next();
-                                    if ((r2.getFirst_node() == r.getSecond_node() && r2.getSecond_node() == r.getFirst_node())) {
+                                for (Road oldRoad : roads) {
+                                    if ((oldRoad.getFirst_node() == newRoad.getSecond_node() && oldRoad.getSecond_node() == newRoad.getFirst_node())) {
                                         isThereYet = isThereYet || true;
                                     }
                                 }
 
                                 if (!isThereYet) {
-                                    r.setId(newRoadID++);
-                                    roads.add(r);
+                                    newRoad.setId(newRoadID++);
+                                    roads.add(newRoad);
                                 }
 
                             }
@@ -362,8 +352,7 @@ public class NetLoader {
         try {
             FileWriter writer = new FileWriter(fileName);
 
-            for (Iterator<Node> it = nodes.iterator(); it.hasNext();) {
-                Node n = it.next();
+            for (Node n : nodes) {
 
                 writer.append(Integer.toString(n.getId()));
                 writer.append(";");
@@ -386,7 +375,7 @@ public class NetLoader {
             writer.close();
 
         } catch (IOException ex) {
-            Logger.getLogger(NetLoader.class.getName()).log(Level.SEVERE, null, ex);
+            ExperimentSetup.LOGGER.log(Level.SEVERE, null, ex);
         }
 
     }
@@ -401,12 +390,11 @@ public class NetLoader {
         try {
             FileWriter writer = new FileWriter(fileName);
 
-            for (Iterator<Road> it = roads.iterator(); it.hasNext();) {
-                Road r = it.next();
+            for (Road r : roads) {
 
                 writer.append(Integer.toString(r.getId()));
                 writer.append(";");
-                writer.append(Integer.toString(r.getFirst_node().getId())); //writer.append(Integer.toString(r.getFirstNode()));
+                writer.append(Integer.toString(r.getFirst_node().getId()));
                 writer.append(";");
                 writer.append(Integer.toString(r.getSecond_node().getId()));
                 writer.append(";");
@@ -443,15 +431,20 @@ public class NetLoader {
                 String[] elements = line.split(";");
 
                 if (elements.length < 2) {
-                    ExperimentSetup.LOGGER.log(Level.SEVERE, "loading coordinates - line is too short");
+                    ExperimentSetup.LOGGER.log(Level.WARNING, "Loading coordinates - line is too short");
                 }
 
                 String name = elements[0];
                 String lat = elements[1];
                 String lng = elements[2];
 
-                this.net.getNode(name).setLat(Double.parseDouble(lat));
-                this.net.getNode(name).setLng(Double.parseDouble(lng));
+                Node node = this.net.getNode(name);
+                if (node != null) {
+                    this.net.getNode(name).setLat(Double.parseDouble(lat));
+                    this.net.getNode(name).setLng(Double.parseDouble(lng));
+                } else {
+                    ExperimentSetup.LOGGER.log(Level.WARNING, "Loading coordinates - non-existent node (" + name + ") " + line);
+                }
 
             }
         } catch (FileNotFoundException ex) {

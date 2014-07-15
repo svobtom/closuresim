@@ -3,61 +3,75 @@ package cz.muni.fi.closuresim;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.Set;
-import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
+import java.util.SortedSet;
+import java.util.TreeSet;
 
 /**
  * Class representing set of roads in the net which can make disconnection.
- * 
+ *
  * @author Tom
  */
-public class Disconnection {
+public class Disconnection implements Comparable<Disconnection> {
 
     /**
-     * Roads which was closed in the disconnection.
+     * Roads which was closed in the disconnection. Can be set only in
+     * constructors.
      */
-    private final Set<Road> roads;
-
+    private final SortedSet<Road> roads;
+    /**
+     * Sum of roads IDs to hashCode purpose.
+     */
+    private final int priparedHash;
+    /**
+     * Shift according to count of roads.
+     */
+    private static final int SHIFT = 10000;
     /**
      * Map of valuations which can be assigned to the disconnection.
      */
     private final Map<Valuation, Number> valuation = new HashMap<>();
 
-    public Disconnection(Set<Road> closedRoads) {
-        roads = new HashSet<>();
-        roads.addAll(closedRoads);
-    }
-
     public Disconnection(Collection<Road> closedRoads) {
-        roads = new HashSet<>();
+        roads = new TreeSet<>();
         roads.addAll(closedRoads);
+
+        int s = 0;
+        for (Road road : closedRoads) {
+            s += road.getId();
+        }
+        priparedHash = closedRoads.size() * SHIFT + s;
     }
 
     public Disconnection(Road r1) {
-        roads = new HashSet<>();
+        roads = new TreeSet<>();
         roads.add(r1);
+        priparedHash = SHIFT + r1.getId();
     }
 
     public Disconnection(Road r1, Road r2) {
-        roads = new HashSet<>();
+        roads = new TreeSet<>();
         roads.add(r1);
         roads.add(r2);
+        priparedHash = 2 * SHIFT + (r1.getId() + r2.getId());
     }
 
     public Disconnection(Road r1, Road r2, Road r3) {
-        roads = new HashSet<>();
+        roads = new TreeSet<>();
         roads.add(r1);
         roads.add(r2);
         roads.add(r3);
+        priparedHash = 3 * SHIFT + (r1.getId() + r2.getId() + r3.getId());
     }
 
     public Disconnection(Road r1, Road r2, Road r3, Road r4) {
-        roads = new HashSet<>();
+        roads = new TreeSet<>();
         roads.add(r1);
         roads.add(r2);
         roads.add(r3);
         roads.add(r4);
+        priparedHash = 4 * SHIFT + (r1.getId() + r2.getId() + r3.getId() + r4.getId());
     }
 
     /**
@@ -68,8 +82,7 @@ public class Disconnection {
     public String getRoadsNames() {
         String result = "";
 
-        for (Iterator<Road> it = roads.iterator(); it.hasNext();) {
-            Road road = it.next();
+        for (Road road : roads) {
             result = result + road.getName() + ";";
         }
 
@@ -79,6 +92,22 @@ public class Disconnection {
 
     public Set<Road> getRoads() {
         return roads;
+    }
+
+    /**
+     * Get sorted roads according its names. 
+     * 
+     * @return 
+     */
+    public SortedSet<Road> getSortedRoads() {
+        
+        SortedSet<Road> r = new TreeSet<>(new RoadComparator());
+        
+        for (Road road :this.roads) {
+            r.add(road);
+        }
+        
+        return r;
     }
 
     public int getNumClosedRoads() {
@@ -116,7 +145,8 @@ public class Disconnection {
     /**
      * Get precalculated remoteness components index.
      *
-     * @return remoteness components index, 0 if variance wasn't be computed before
+     * @return remoteness components index, 0 if variance wasn't be computed
+     * before
      */
     public int getRCI() {
         Number result = getEvaluation(Valuation.REMOTENESS_COMPONENTS);
@@ -130,7 +160,7 @@ public class Disconnection {
     /**
      * Get precalculated number of inhabitants of smaller component.
      *
-     * @return umber of inhabitants, 0 if variance wasn't be computed before
+     * @return number of inhabitants, 0 if variance wasn't be computed before
      */
     public int getSmallerComponentInhabitants() {
         Number result = getEvaluation(Valuation.THE_MOST_INHABITANTS_IN_THE_SMALLEST_COMPONENT);
@@ -143,9 +173,7 @@ public class Disconnection {
 
     @Override
     public int hashCode() {
-        int hash = 3;
-        hash = 13 * hash + (this.roads != null ? this.roads.hashCode() : 0);
-        return hash;
+        return priparedHash;
     }
 
     @Override
@@ -158,10 +186,32 @@ public class Disconnection {
         }
         final Disconnection other = (Disconnection) obj;
         // if sets of roads doesn't contains exactlly same roads, it isn't equals
-        if (!this.roads.equals(other.roads)) {
-            return false;
+        return this.roads.equals(other.roads);
+    }
+
+    @Override
+    public int compareTo(Disconnection other) {
+        // disconnection with less roads is less, vice versa 
+        if (this.roads.size() < other.roads.size()) {
+            return -1;
+        } else if (this.roads.size() > other.roads.size()) {
+            return 1;
         }
-        return true;
+
+        Iterator<Road> itThis = this.roads.iterator();
+        Iterator<Road> itOther = other.roads.iterator();
+
+        while (itThis.hasNext()) {
+            Road roadThis = itThis.next();
+            Road roadOther = itOther.next();
+
+            final int roadComparison = roadThis.compareTo(roadOther);
+            if (roadComparison != 0) {
+                return roadComparison;
+            }
+        }
+        // disconnections are same
+        return 0;
     }
 
     /*

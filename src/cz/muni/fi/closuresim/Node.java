@@ -44,9 +44,7 @@ public class Node {
 
     @Override
     public int hashCode() {
-        int hash = 3;
-        hash = 29 * hash + this.id;
-        return hash;
+        return 7 * this.id;
     }
 
     @Override
@@ -58,10 +56,7 @@ public class Node {
             return false;
         }
         final Node other = (Node) obj;
-        if (this.id != other.id) {
-            return false;
-        }
-        return true;
+        return this.id == other.id;
     }
 
     public int getType() {

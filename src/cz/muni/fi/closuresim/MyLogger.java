@@ -52,11 +52,6 @@ public class MyLogger extends Logger {
         }
 
         super.log(level, msg);
-
-        // severe error occured
-        if (level.equals(Level.SEVERE)) {
-            System.exit(1);
-        }
     }
 
     @Override
@@ -67,11 +62,6 @@ public class MyLogger extends Logger {
         }
 
         super.log(level, msg, thrown);
-
-        // severe error occured
-        if (level.equals(Level.SEVERE)) {
-            System.exit(1);
-        }
     }
 
     /**
@@ -90,6 +80,7 @@ public class MyLogger extends Logger {
         addTime("endTime");
         System.out.println("Finding time is " + (getTime("endOfAlgorithm") - getTime("startOfAlgorithm")) / 1000.0 + " seconds. ");
         System.out.println("Evaluation time is " + (getTime("endOfEvaluation") - getTime("startOfEvaluation")) / 1000.0 + " seconds. ");
+        System.out.println("Filtering NCS time is " + (getTime("endOfFiltering") - getTime("startOfFiltering")) / 1000.0 + " seconds. ");
         System.out.println("Sorting time is " + (getTime("endOfSorting") - getTime("startOfSorting")) / 1000.0 + " seconds. ");
         System.out.println("Analysis time is " + (getTime("endOfAnalysis") - getTime("startOfAnalysis")) / 1000.0 + " seconds. ");
         System.out.println("Total time is " + (getTime("endTime") - getTime("startTime")) / 1000.0 + " seconds. ");

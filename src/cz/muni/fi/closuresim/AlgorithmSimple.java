@@ -42,7 +42,7 @@ public class AlgorithmSimple implements Algorithm {
             r.close();
             int numOfComp = net.getNumOfComponents();
             if (numOfComp > 1) {
-                System.out.println("Disconnected after close road " + r.getId() + " (" + net.getValueOfBadness(numOfComp) + ").");
+                System.out.println("Disconnected after close road " + r.getId() + " (" + net.getValueOfBadness(numOfComp, 2) + ").");
                 oneRoadToDisconnect.add(r);
             }
             r.open();
@@ -63,7 +63,7 @@ public class AlgorithmSimple implements Algorithm {
                         r2.close();
                         int numOfComp = net.getNumOfComponents();
                         if (numOfComp > 1) {
-                            System.out.println("Graph isn't connected when roads " + r.getId() + " and " + r2.getId() + " are closed (" + net.getValueOfBadness(numOfComp) + "). ");
+                            System.out.println("Graph isn't connected when roads " + r.getId() + " and " + r2.getId() + " are closed (" + net.getValueOfBadness(numOfComp, 2) + "). ");
 
                         }
                         r2.open();

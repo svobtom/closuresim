@@ -89,7 +89,7 @@ public class AlgorithmCycle implements Algorithm {
             threads[i].setName(Integer.toString(i));
         }
 
-        // start threads
+        // start threads - searching
         for (int i = 0; i < NUMBER_OF_THREADS; i++) {
             threads[i].start();
         }
@@ -102,7 +102,7 @@ public class AlgorithmCycle implements Algorithm {
                 ExperimentSetup.LOGGER.log(Level.SEVERE, "Exception during waiting to end of all threads in the algorithm.", ex);
             }
         }
-
+        
         System.out.println("Algorithm done.");
     }
 }

@@ -82,9 +82,9 @@ class AlgorithmLoadResults implements Algorithm {
                     Road r = this.net.getRoad(elements[i]);
 
                     if (r == null) {
-                        throw new IllegalArgumentException("Net doesn't contain the road which should be in disconnection.");
+                        throw new IllegalArgumentException("Net doesn't contain the road (" + elements[i] + ") which should be in disconnection.");
                     }
-
+                    
                     setRoad.add(r);
                 }
 
@@ -92,7 +92,9 @@ class AlgorithmLoadResults implements Algorithm {
                 
                 // shouldn't occur
                 if (dis.getNumClosedRoads() != number) {
-                    throw new IllegalStateException("Wrong number of closed roads.");
+                    System.out.print(setRoad);
+                    System.out.println(dis.getNumClosedRoads() + " " + number);
+                    throw new IllegalStateException("Wrong number of closed roads on line " + lineNumber + " - " + line);
                 }
                 
                 this.disconnectionCollector.addDisconnection(dis);

@@ -21,14 +21,15 @@ public class DisconnectionCollector {
     /**
      * Disconnections
      */
-    private Set<Disconnection> disconnections;
+    private SortedSet<Disconnection> disconnections;
     /**
      * Chosen comparator
      */
     private Comparator comparator;
 
     public DisconnectionCollector() {
-        this.disconnections = Collections.synchronizedSet(new HashSet<Disconnection>());
+        //this.disconnections = Collections.synchronizedSet(new HashSet<Disconnection>());
+        this.disconnections = Collections.synchronizedSortedSet(new TreeSet<Disconnection>());
         // set default comparator
         this.comparator = new VarianceComparator();
     }
@@ -293,21 +294,29 @@ public class DisconnectionCollector {
      * Get number of disconnections which do not form minimal cut-set
      * of the net.
      * 
+     * @param remove if true found not minimal cut-sets will be removed
      * @return 
      */
-    public int getNumberOfNotMinimalCutSetDisconnections() {
-        int result = 0;
-        for (Disconnection disconnection : disconnections) {
+    public int notMinimalCutSets(boolean remove) {
+        Set<Disconnection> toRemove = new HashSet<>();
+        
+        for (Disconnection disconnection : this.disconnections) {
             Number number = disconnection.getEvaluation(Valuation.IS_MINIMAL_CUT_SET);
             if (number == null) {
                 throw new IllegalArgumentException("Not evaluated by: IS_MINIMAL_CUT_SET");
             }
             int num = (Integer) number;
+            
             if (num != 1) {
-                result++;
+                toRemove.add(disconnection);
             }
         }
-        return result;
+        
+        if (remove) {
+            this.disconnections.removeAll(toRemove);
+        }
+        
+        return toRemove.size();
     }
 
     /**

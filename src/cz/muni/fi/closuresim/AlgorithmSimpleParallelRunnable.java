@@ -172,7 +172,7 @@ public class AlgorithmSimpleParallelRunnable implements Runnable {
                                 r3.close();
                                 int numOfComp = net.getNumOfComponents();
                                 if (numOfComp > 1) {
-                                    double variance = net.getValueOfBadness(numOfComp);
+                                    double variance = net.getValueOfBadness(numOfComp, 4);
                                     System.out.println(Thread.currentThread().getName() + ": Disconnected after close roads " + r1.getName() + ", " + r2.getName() + " and " + r3.getName() + " (" + variance + "). ");
 
                                     Disconnection dis = new Disconnection(r1, r2, r3);

@@ -5,6 +5,8 @@ import java.util.List;
 import java.util.Set;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.SortedSet;
+import java.util.TreeSet;
 import java.util.logging.Level;
 import org.jgrapht.Graph;
 import org.jgrapht.graph.Multigraph;
@@ -18,18 +20,22 @@ import org.jgrapht.alg.DijkstraShortestPath;
 public class AlgCycleRunnableJG implements Runnable {
 
     private final Net net;
-    private final Set<Disconnection> disconnections;
+    private final SortedSet<Disconnection> disconnections;
     private final DisconnectionCollector disconnectionCollector;
     private final int maxNumberOfRoadsToClose;
     private final int maxNumberOfComponents;
     private final boolean findOnlyAccurateDisconnection;
     private final ResultWriter resultWriter;
+    /**
+     * Number of disconenctions found from one road
+     */
+    private int disconnectionsFromOneRoad = 0;
 
     private final Graph<Node, Road> graph = new Multigraph(Road.class);
-
+    
     public AlgCycleRunnableJG(Net net, DisconnectionCollector dc, final int roads, final int comp, final boolean foad) {
         this.net = net.clone();
-        this.disconnections = new HashSet<>();
+        this.disconnections = new TreeSet<>();
         this.disconnectionCollector = dc;
         this.maxNumberOfRoadsToClose = roads;
         this.maxNumberOfComponents = comp;
@@ -67,22 +73,16 @@ public class AlgCycleRunnableJG implements Runnable {
                 // 1. choosing edge e
                 theFindCyclesAlgorithm(bannedRoads, cRoadToStart, 1, true);
 
-                // add found disconnections by one run of the algorithm to the disconnection collector
-                final int numFoundDis = this.disconnections.size();
-                
-                // save partial results
-                resultWriter.storeDisconnection(cRoadToStart.getName(), this.disconnections);
-
-                this.disconnectionCollector.addDisconnections(this.disconnections);
-
-                this.disconnections.clear();
-
                 ExperimentSetup.LOGGER.log(Level.INFO,
-                        "Road " + cRoadToStart.getName() + " was processed by thread {0}. Found " + numFoundDis + " disconnections.",
+                        "Road " + cRoadToStart.getName() + " was processed by thread {0}. Found " + this.disconnectionsFromOneRoad + " disconnections.",
                         Thread.currentThread().getName());
+                this.disconnectionsFromOneRoad = 0;
             }
         }
-
+        ExperimentSetup.LOGGER.log(Level.INFO, "Thread {0} finished searching.", Thread.currentThread().getName());
+        resultWriter.storeDisconnection(Thread.currentThread().getName(), disconnections);
+        this.disconnectionCollector.addDisconnections(this.disconnections);
+        
         ExperimentSetup.LOGGER.log(Level.INFO, "Thread {0} end.", Thread.currentThread().getName());
     }
 
@@ -99,27 +99,8 @@ public class AlgCycleRunnableJG implements Runnable {
             graph.removeEdge(roadTORemove);
         }
 
-        // find the shortest cycle passing thru just one road from banned roads and avoid the others 
-        // if not go recursively to more components
-        List<Road> path = null;
-        if (!recComp) {
-            int minLength = Integer.MAX_VALUE;
-
-            for (Road chosenRoad : bannedRoads) {
-
-                DijkstraShortestPath<Node, Road> dsp = new DijkstraShortestPath<>(graph, chosenRoad.getFirst_node(), chosenRoad.getSecond_node());
-                List<Road> tempPath = dsp.getPathEdgeList();
-
-                // set the shortest cycle
-                if (tempPath != null && tempPath.size() <= minLength) {
-                    path = tempPath;
-                    minLength = tempPath.size();
-                }
-            }
-        } else {
-            DijkstraShortestPath<Node, Road> dsp = new DijkstraShortestPath<>(graph, road.getFirst_node(), road.getSecond_node());
-            path = dsp.getPathEdgeList();
-        }
+        DijkstraShortestPath<Node, Road> dsp = new DijkstraShortestPath<>(graph, road.getFirst_node(), road.getSecond_node());
+        List<Road> path = dsp.getPathEdgeList();
 
         for (Road roadToAdd : bannedRoads) {
             graph.addEdge(roadToAdd.getFirst_node(), roadToAdd.getSecond_node(), roadToAdd);
@@ -131,7 +112,8 @@ public class AlgCycleRunnableJG implements Runnable {
             // if we don't want disconnection by fewer roads, skip putting down 
             if (!findOnlyAccurateDisconnection || bannedRoads.size() >= maxNumberOfRoadsToClose) {
                 Disconnection dis = new Disconnection(bannedRoads);
-                disconnections.add(dis);
+                this.disconnections.add(dis);
+                this.disconnectionsFromOneRoad++;
             }
 
             // recursive finding disconnections to more components
@@ -146,7 +128,7 @@ public class AlgCycleRunnableJG implements Runnable {
                 }
             }
 
-        } else {
+        } else {            
             // The path exists. We haven't got the cut.
             // limit maximal number of closed roads
             if ((bannedRoads.size()) < maxNumberOfRoadsToClose) {

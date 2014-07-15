@@ -10,7 +10,7 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Representation of the network. 
+ * Representation of the network.
  *
  * @author Tom
  */
@@ -146,16 +146,13 @@ public class Net {
      * @return int - number of components in the net
      */
     public int getNumOfComponents() {
-        // clearing of marking
-        for (Iterator<Node> it = nodes.iterator(); it.hasNext();) {
-            Node n = it.next();
+        for (Node n : nodes) {
             n.setMarking(0);
         }
 
         // marking of the nodes, find the first node and the others (important if the net is not connected)
         int nextMarking = 1;
-        for (Iterator<Node> it = nodes.iterator(); it.hasNext();) {
-            Node node = it.next();
+        for (Node node : nodes) {
             if (getNumOfComponentsRec(node, nextMarking)) {
                 nextMarking++;
             }
@@ -163,8 +160,7 @@ public class Net {
 
         // count different markings
         Set<Integer> dm = new HashSet();
-        for (Iterator<Node> it = nodes.iterator(); it.hasNext();) {
-            Node n = it.next();
+        for (Node n : nodes) {
             dm.add(n.getMarking());
         }
 
@@ -179,9 +175,7 @@ public class Net {
         }
 
         n.setMarking(mark);
-        // get all neighbours of the node and recursion on them
-        for (Iterator<Node> it = n.getNeighbours().iterator(); it.hasNext();) {
-            Node neighbour = it.next();
+        for (Node neighbour : n.getNeighbours()) {
             getNumOfComponentsRec(neighbour, mark);
         }
 
@@ -268,10 +262,11 @@ public class Net {
      * Return variance of the net. Method getNumOfComponents() must be run
      * before running this method (because marking of nodes).
      *
-     * @param numOfTheComponents - number of components in the net
+     * @param numOfTheComponents number of components in the net
+     * @param closedRoads roads which make the disconnection
      * @return variance
      */
-    public double getValueOfBadness(final int numOfTheComponents) {
+    public double getValueOfBadness(final int numOfTheComponents, final int closedRoads) {
         int sumOfInhabitants = 0;
         int[] inhabitantsInComponent;
         inhabitantsInComponent = new int[numOfTheComponents];
@@ -293,15 +288,25 @@ public class Net {
             }
         }
 
+        final int denumerator = closedRoads + 1;
+        
         // count average value
-        double expectedValue = (1 / (double) numOfTheComponents) * (sumOfInhabitants);
+        double expectedValue = (1 / (double) denumerator) * (sumOfInhabitants);
 
         // count variance
         double varRight = 0;
         for (int i = 0; i < numOfTheComponents; i++) {
             varRight += Math.pow(inhabitantsInComponent[i] - expectedValue, 2);
         }
-        double variance = (1 / (double) numOfTheComponents) * varRight;
+        
+        // count not existing components
+        int j = denumerator;
+        while (numOfTheComponents < j) {
+            varRight += Math.pow(0 - expectedValue, 2);
+            j--;
+        }
+        
+        double variance = (1 / (double) (denumerator - 1)) * varRight;
 
         return Math.sqrt(variance);
 
@@ -764,20 +769,21 @@ public class Net {
     }
 
     /**
-     * Check if the set of closed roads make MINIMAL cut-set of the net. 
-     * 
+     * Check if the set of closed roads make MINIMAL cut-set of the net.
+     *
      * @return true if the roads make cut-set, false otherwise
      */
     public boolean isClosedRoadsMinimalCutSet() {
 
-        // check marking
-        for (Node node : this.nodes) {
-            if (node.getMarking() == 0) {
-                ExperimentSetup.LOGGER.warning("A node wasn't marked");
-                throw new IllegalArgumentException("A node wasn't marked");
-            }
-        }
-
+        // check marking - node must be marked
+        /*
+         for (Node node : this.nodes) {
+         if (node.getMarking() == 0) {
+         ExperimentSetup.LOGGER.warning("A node wasn't marked");
+         throw new IllegalArgumentException("A node wasn't marked");
+         }
+         }
+         */
         for (Road road : this.roads) {
             if (road.isClosed() && road.getFirst_node().getMarking() == road.getSecond_node().getMarking()) {
                 return false;

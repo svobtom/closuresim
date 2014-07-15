@@ -8,7 +8,7 @@ import java.util.Set;
  *
  * @author Tom
  */
-public class Road {
+public class Road implements Comparable<Road> {
 
     private int id;
     private Node first_node;
@@ -56,9 +56,7 @@ public class Road {
 
     @Override
     public int hashCode() {
-        int hash = 5;
-        hash = 13 * hash + this.id;
-        return hash;
+        return this.id;
     }
 
     @Override
@@ -70,10 +68,32 @@ public class Road {
             return false;
         }
         final Road other = (Road) obj;
-        if (this.id != other.id) {
-            return false;
+
+        return this.id == other.id;
+    }
+
+    @Override
+    public int compareTo(Road other) {
+
+        if (this.id < other.id) {
+            return -1;
+        } else if (this.id == other.id) {
+            return 0;
+        } else {
+            return 1;
         }
-        return true;
+
+        /*
+         if (this.id != other.id) {
+         if (this.id < other.id) {
+         return -1;
+         } else {
+         return 1;
+         }
+         } else {
+         return 0;
+         }
+         */
     }
 
     @Override

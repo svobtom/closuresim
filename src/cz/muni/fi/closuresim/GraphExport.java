@@ -20,13 +20,13 @@ import java.util.Random;
 import java.util.logging.Level;
 
 /**
- * Exports files in GraphML format. 
- * 
+ * Exports files in GraphML format.
+ *
  * @author Tom
  */
 public class GraphExport {
 
-    private final String filename; 
+    private final String filename;
     private final String coloredRoadsFileName = "colored-roads.graphml";
     private final File outputDirectory;
 
@@ -121,6 +121,10 @@ public class GraphExport {
 
                     Vertex newVertex = graph.addVertex("n" + node.getId());
                     newVertex.setProperty("label", node.getName());
+                    newVertex.setProperty("inhab", node.getNumOfInhabitant());
+
+                    newVertex.setProperty("lat", node.getLat());
+                    newVertex.setProperty("lng", node.getLng());
 
                     colorVertex(newVertex, node.getMarking());
 

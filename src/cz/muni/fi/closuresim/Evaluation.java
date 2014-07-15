@@ -36,8 +36,7 @@ public class Evaluation {
         
         // if no disconnection was in the collector don't start the threads
         if (this.disconnectionCollector.getNumberOfDisconnections() == 0) {
-            System.out.println("There is no disconnection to evaluate");
-            ExperimentSetup.LOGGER.info("There is no disconnection to evaluate");
+            ExperimentSetup.LOGGER.warning("There is no disconnection to evaluate");
             return;
         }
         
