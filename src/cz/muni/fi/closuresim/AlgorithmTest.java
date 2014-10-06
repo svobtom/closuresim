@@ -19,7 +19,7 @@ import org.jgrapht.graph.Multigraph;
  */
 class AlgorithmTest implements Algorithm {
 
-    private Net net;
+    private final Net net;
 
     public AlgorithmTest(Net net, DisconnectionCollector disconnectionCollector) {
         this.net = net.clone();
@@ -27,9 +27,25 @@ class AlgorithmTest implements Algorithm {
 
     @Override
     public void start(int maxClosedRoads) {
+        int pocet = 0;
 
-        allCycleEnumeration();
+        System.out.println("--- Stejne ---");
+        for (Road r1 : net.getRoads()) {
+            for (Road r2 : net.getRoads()) {
 
+                if (!r1.equals(r2)) {
+
+                    if (r1.getFirst_node().equals(r2.getFirst_node()) && r1.getSecond_node().equals(r2.getSecond_node())
+                            || r1.getFirst_node().equals(r2.getSecond_node()) && r1.getSecond_node().equals(r2.getFirst_node())) {
+
+                        System.out.println(r1.getName() + " === " + r2.getName());
+                        pocet++;
+                    }
+                }
+            }
+        }
+        System.out.println("Pocet stejnych je " + pocet);
+        //allCycleEnumeration();
         //varianta1();
         //varianta2();
     }
@@ -195,7 +211,7 @@ class AlgorithmTest implements Algorithm {
     private void allCycleEnumeration() {
 
         // net to jGrapht
-        DirectedMultigraph<Node, Road> graph = new DirectedMultigraph<>(Road.class);                
+        DirectedMultigraph<Node, Road> graph = new DirectedMultigraph<>(Road.class);
 
         // add vertices
         for (Node n : this.net.getNodes()) {
@@ -205,17 +221,17 @@ class AlgorithmTest implements Algorithm {
         // add roads
         for (Road r : this.net.getRoads()) {
             graph.addEdge(r.getFirst_node(), r.getSecond_node(), r);
-            graph.addEdge(r.getSecond_node(), r.getFirst_node(),  r);
+            graph.addEdge(r.getSecond_node(), r.getFirst_node(), r);
         }
-        
+
         graph.removeVertex(net.getNode(24));
-        
+
         CycleDetector<Node, Road> cycleDetector = new CycleDetector<>(graph);
-        
+
         for (Node s : cycleDetector.findCycles()) {
             System.out.println(s);
         }
-        
+
         System.out.println("Number of cycles " + cycleDetector.findCycles().size());
 
     }

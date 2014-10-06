@@ -60,7 +60,7 @@ public class NetReducer {
     }
 
     private void storeToFiles() {
-        NetLoader nl = new NetLoader();
+        NetLoader nl = new NetLoader(false);
         List nodeList = new LinkedList(this.newNet.getNodes());
         nl.creatNodesFile("nodes-reduced.csv", nodeList);
         List roadList = new LinkedList(this.newNet.getRoads());

@@ -66,11 +66,13 @@ class AlgorithmLoadResults implements Algorithm {
             while ((line = br.readLine()) != null) {
                 // skip prefix
                 if (lineNumber < startResultNo) {
+                    lineNumber++;
                     continue;
                 }
 
                 // skip postfix
                 if (lineNumber > stopResultNo) {
+                    lineNumber++;
                     break;
                 }
                 lineNumber++;
@@ -82,7 +84,7 @@ class AlgorithmLoadResults implements Algorithm {
                     Road r = this.net.getRoad(elements[i]);
 
                     if (r == null) {
-                        throw new IllegalArgumentException("Net doesn't contain the road (" + elements[i] + ") which should be in disconnection.");
+                        throw new IllegalArgumentException("Net doesn't contain the road (" + elements[i] + ") on the line " + (lineNumber - 1) + " which should be in disconnection.");
                     }
                     
                     setRoad.add(r);
