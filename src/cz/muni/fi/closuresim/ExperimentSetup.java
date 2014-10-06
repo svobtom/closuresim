@@ -71,7 +71,7 @@ public class ExperimentSetup {
         System.out.println("Program use " + USE_CPUs + "/" + AVAILABLE_CPUs + " CPUs installed in this system. ");
 
         // Create new network, load nodes and roads from file
-        NetLoader loader = new NetLoader();
+        NetLoader loader = new NetLoader(Boolean.parseBoolean(properties.getProperty("ignoreInhabitants")));
         Net net;
 
         // choose load function according to input file(s)

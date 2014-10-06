@@ -4,11 +4,9 @@ import java.io.*;
 import java.nio.charset.Charset;
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
-import java.util.StringTokenizer;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.apache.commons.io.FileUtils;
@@ -23,8 +21,11 @@ public class NetLoader {
 
     final private Net net;
 
-    public NetLoader() {
+    private final boolean ignoreInhabitants;
+
+    public NetLoader(boolean ignoreInhabitants) {
         net = new Net();
+        this.ignoreInhabitants = ignoreInhabitants;
     }
 
     /**
@@ -92,7 +93,13 @@ public class NetLoader {
                 n.setId(id);
                 n.setType(type);
                 n.setName(name);
-                n.setNumOfInhabitants(inhabitions);
+
+                if (ignoreInhabitants) {
+                    // only one inhabitant in every node
+                    n.setNumOfInhabitants(1);
+                } else {
+                    n.setNumOfInhabitants(inhabitions);
+                }
 
                 this.net.addNode(n);
 
@@ -222,7 +229,7 @@ public class NetLoader {
             BufferedReader br = new BufferedReader(new InputStreamReader(fis, Charset.forName("UTF-8")));
 
             String line;
-            int i = 1;
+            int newIDtoAssign = 1;
 
             // get lines from source file
             while ((line = br.readLine()) != null) {
@@ -233,16 +240,12 @@ public class NetLoader {
 
                     // get name of the node and num of inhabitions
                     String[] line_elements = elements[0].split(";");
-                    //System.out.println(" (" + line_elements[0] + ", " + line_elements[1] + ") ");
-                    //System.out.print(i + ": " + elements[0]);
-                    Node node = new Node();
-                    node.setId(i);
-                    node.setName(line_elements[0]);
-                    int num = Integer.parseInt(line_elements[1]);
-                    node.setNumOfInhabitants(num);
-                    nodes.add(node);
-                    i++;
 
+                    Node node = new Node();
+                    node.setId(newIDtoAssign++);
+                    node.setName(line_elements[0]);
+                    node.setNumOfInhabitants(Integer.parseInt(line_elements[1]));
+                    nodes.add(node);
                 }
             }
         } catch (FileNotFoundException ex) {
@@ -277,7 +280,7 @@ public class NetLoader {
 
                     String[] node_elements = elements[0].split(";");
                     String newNodeName = node_elements[0];
-                    Node newNode = new Node();
+                    Node newNode = null;
 
                     // searching new node in recently loaded nodes
                     for (Node oldNode : nodes) {
@@ -286,42 +289,81 @@ public class NetLoader {
                         }
                     }
 
-                    String roadsString;
-                    StringTokenizer st = new StringTokenizer(elements[1], " ");
-                    while (st.hasMoreElements()) {
-                        roadsString = (String) st.nextElement();
+                    // node wasn't found
+                    if (newNode == null) {
+                        ExperimentSetup.LOGGER.log(Level.SEVERE, "Node wasn't found during loading roads.");
+                    } else {
 
-                        // test if there is enought semicolons
-                        if (roadsString.split(";").length < 4) {
-                            // if not append rest of the string
-                            roadsString += "  " + (String) st.nextElement();
+                        // parsing informations about sections (roads)
+                        final String sections = elements[1];
+                        System.out.println(sections); /////////////////////////////////////////////////////
+
+                        final List<String> listOfSections = new LinkedList<>();
+                        int previousStart = 0;
+                        int numberOfSemicolons = 0;
+                        for (int position = 0; position < sections.length(); position++) {
+                            char character = sections.charAt(position);
+
+                            // counting semicolons
+                            if (character == ';') {
+                                numberOfSemicolons++;
+                            }
+
+                            // if there is right number of semicolons AND charecter is space or we are at the end of the string sections 
+                            if (numberOfSemicolons == 4 && (character == ' ' || position == sections.length() - 1)) {
+                                // next position is the last
+                                if (position == sections.length() - 1) {
+                                    position++;
+                                }
+
+                                listOfSections.add(sections.substring(previousStart, position));
+                                previousStart = position + 1;
+                                numberOfSemicolons = 0;
+                            }
                         }
 
-                        String[] oneRoad = roadsString.split(";");
+                        System.out.println(listOfSections.toString());
 
-                        for (Node n : nodes) {
+                        for (String sectionString : listOfSections) {
+                            String[] oneRoad = sectionString.split(";");
 
-                            if (n.getName().equals(oneRoad[0])) {
-                                Road newRoad = new Road();
+                            // test if there is enought semicolons
+                            if (oneRoad.length < 4) {
+                                ExperimentSetup.LOGGER.log(Level.SEVERE, "There isn't the right number of cemicolons: " + sectionString);
+                            }
 
-                                newRoad.setName(oneRoad[2].replace("\t", " "));
-                                newRoad.setFirst_node(newNode);
-                                newRoad.setSecond_node(n);
-                                if (oneRoad.length > 3) {
-                                    newRoad.setLength(Integer.parseInt(oneRoad[3]));
+                            // create road
+                            Road newRoad = new Road();
+                            newRoad.setName(oneRoad[2]);
+                            newRoad.setLength(Integer.parseInt(oneRoad[3]));
+                            newRoad.setTime((int) Double.parseDouble(oneRoad[4]));
+
+                            newRoad.setFirst_node(newNode);
+
+                            // searching new node in recently loaded nodes
+                            Node newSecondNode = null;
+                            for (Node secondNode : nodes) {
+                                if (secondNode.getName().equals(oneRoad[0])) {
+                                    newSecondNode = secondNode;
                                 }
-                                if (oneRoad.length > 4) {
-                                    newRoad.setTime((int) Double.parseDouble(oneRoad[4]));
-                                }
+                            }
+
+                            // the second node wasn't found
+                            if (newSecondNode == null) {
+                                ExperimentSetup.LOGGER.log(Level.SEVERE, "Node the second wasn't found during loading roads.");
+                            } else {
+                                newRoad.setSecond_node(newSecondNode);
 
                                 // test if the road has been loaded yet
                                 boolean isThereYet = false;
                                 for (Road oldRoad : roads) {
-                                    if ((oldRoad.getFirst_node() == newRoad.getSecond_node() && oldRoad.getSecond_node() == newRoad.getFirst_node())) {
-                                        isThereYet = isThereYet || true;
+                                    if (oldRoad.getName().equals(newRoad.getName())) {
+                                        isThereYet = true;
+                                        break;
                                     }
                                 }
 
+                                // add new road to the list of roads
                                 if (!isThereYet) {
                                     newRoad.setId(newRoadID++);
                                     roads.add(newRoad);
@@ -329,9 +371,7 @@ public class NetLoader {
 
                             }
                         }
-
                     }
-
                 }
             }
         } catch (FileNotFoundException ex) {

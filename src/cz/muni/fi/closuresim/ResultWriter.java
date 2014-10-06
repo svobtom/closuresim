@@ -81,11 +81,34 @@ public class ResultWriter {
                 out[i] = new BufferedWriter(fileWriter[i]);
             }
 
+            // write headers
+            for (int i = 0; i < maxClosedRoads; i++) {
+                for (int j = 1; j <= i + 1; j++) {
+                    out[i].write("road" + j + ";");
+                }
+                out[i].write("components" + ";");
+                out[i].write("variance" + ";");
+                out[i].write("inhabitants" + ";");
+                out[i].write("remoteness");
+                out[i].newLine();
+            }
+
+            for (int i = 0; i < maxClosedRoads; i++) {
+                outAll.write("road" + i + ";");
+            }
+            outAll.write("separator" + ";");
+            outAll.write("components" + ";");
+            outAll.write("variance" + ";");
+            outAll.write("inhabitants" + ";");
+            outAll.write("remoteness");
+            outAll.newLine();
+
             // interate over all results
             for (Disconnection disconnection : disconnections) {
 
                 outAll.write("");
-
+                // this variable count writed roads and it is use for writing empty columns
+                int writedRoads = 0;
                 // iterate over all closed roads in the disconnection
                 for (Road r : disconnection.getSortedRoads()) {
 
@@ -93,12 +116,18 @@ public class ResultWriter {
                     out[disconnection.getNumClosedRoads() - 1].write(r.getName() + ";");
                     // write to all result file
                     outAll.write(r.getName() + ";");
-
+                    writedRoads++;
                 }
 
-                outAll.write("VAL;");
+                // write empty columns when number of roads on the line is less than max number of roads
+                while (writedRoads < maxClosedRoads) {
+                    outAll.write(";");
+                    writedRoads++;
+                }
 
-                final double roundedVariance = (double) Math.round(disconnection.getVariance() * 100) / 100;
+                outAll.write("||;");
+
+                final double roundedVariance = (double) Math.round(disconnection.getVariance() * 1000000) / 1000000;
 
                 out[disconnection.getNumClosedRoads() - 1].write(Integer.toString(disconnection.getNumOfComponents()) + ";");
                 out[disconnection.getNumClosedRoads() - 1].write(Double.toString(roundedVariance) + ";");
@@ -170,7 +199,7 @@ public class ResultWriter {
         } catch (IOException ex) {
             ExperimentSetup.LOGGER.log(Level.SEVERE, "Error writing partial result to file", ex);
         }
-        
+
     }
 
     public void deleteTempFiles() {

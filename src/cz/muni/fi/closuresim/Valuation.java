@@ -12,6 +12,10 @@ public enum Valuation {
      */
     VARIANCE,
     /**
+     * Variance as previous. In every node is only one inhabitant.
+     */
+    VARIANCE_WITHOUT_INHABITANTS,
+    /**
      * Number of components of the network.
      */
     COMPONENTS,
