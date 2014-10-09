@@ -236,7 +236,7 @@ public class NetLoader {
                 String[] elements = line.split("  ", 2);
 
                 // check if the line is not empty
-                if (elements.length >= 2) {
+                if (elements.length >= 1) {
 
                     // get name of the node and num of inhabitions
                     String[] line_elements = elements[0].split(";");
@@ -244,7 +244,7 @@ public class NetLoader {
                     Node node = new Node();
                     node.setId(newIDtoAssign++);
                     node.setName(line_elements[0]);
-                    node.setNumOfInhabitants(Integer.parseInt(line_elements[1]));
+                    node.setNumOfInhabitants(Integer.parseInt(line_elements[1].trim()));
                     nodes.add(node);
                 }
             }
@@ -296,7 +296,7 @@ public class NetLoader {
 
                         // parsing informations about sections (roads)
                         final String sections = elements[1];
-                        System.out.println(sections); /////////////////////////////////////////////////////
+                        //System.out.println(sections); /////////////////////////////////////////////////////
 
                         final List<String> listOfSections = new LinkedList<>();
                         int previousStart = 0;
@@ -322,8 +322,7 @@ public class NetLoader {
                             }
                         }
 
-                        System.out.println(listOfSections.toString());
-
+                        //System.out.println(listOfSections.toString()); //////////////////////////
                         for (String sectionString : listOfSections) {
                             String[] oneRoad = sectionString.split(";");
 

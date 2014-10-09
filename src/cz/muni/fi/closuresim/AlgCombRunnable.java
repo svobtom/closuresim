@@ -43,7 +43,7 @@ public class AlgCombRunnable implements Runnable {
         this.fronta.addAll(this.generator.generateObjectsRange(startIndex, stopIndex));
 
         // start testing
-        //testCombinations();
+        testCombinations();
         
         // store disconnections
         this.disconnectionCollector.addDisconnections(disconnections);

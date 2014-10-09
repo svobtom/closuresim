@@ -30,10 +30,11 @@ public class AlgCycleRunnableJG implements Runnable {
      * Number of disconenctions found from one road
      */
     private int disconnectionsFromOneRoad = 0;
+    private final boolean onlyStoreResultByRoads;
 
     private final Graph<Node, Road> graph = new Multigraph(Road.class);
-    
-    public AlgCycleRunnableJG(Net net, DisconnectionCollector dc, final int roads, final int comp, final boolean foad) {
+
+    public AlgCycleRunnableJG(Net net, DisconnectionCollector dc, final int roads, final int comp, final boolean foad, boolean onlyStoreResultByRoads) {
         this.net = net.clone();
         this.disconnections = new TreeSet<>();
         this.disconnectionCollector = dc;
@@ -42,6 +43,7 @@ public class AlgCycleRunnableJG implements Runnable {
         this.findOnlyAccurateDisconnection = foad;
         File partRes = new File(ExperimentSetup.outputDirectory, "partial-results");
         this.resultWriter = new ResultWriter(partRes);
+        this.onlyStoreResultByRoads = onlyStoreResultByRoads;
 
         // add vertices
         for (Node n : this.net.getNodes()) {
@@ -77,12 +79,20 @@ public class AlgCycleRunnableJG implements Runnable {
                         "Road " + cRoadToStart.getName() + " was processed by thread {0}. Found " + this.disconnectionsFromOneRoad + " disconnections.",
                         Thread.currentThread().getName());
                 this.disconnectionsFromOneRoad = 0;
+
+                if (onlyStoreResultByRoads) {
+                    resultWriter.storeDisconnection(cRoadToStart.getName(), disconnections);
+                    disconnections.clear();
+                }
             }
         }
         ExperimentSetup.LOGGER.log(Level.INFO, "Thread {0} finished searching.", Thread.currentThread().getName());
-        resultWriter.storeDisconnection(Thread.currentThread().getName(), disconnections);
-        this.disconnectionCollector.addDisconnections(this.disconnections);
-        
+
+        if (!onlyStoreResultByRoads) {
+            resultWriter.storeDisconnection(Thread.currentThread().getName(), disconnections);
+            this.disconnectionCollector.addDisconnections(this.disconnections);
+        }
+
         ExperimentSetup.LOGGER.log(Level.INFO, "Thread {0} end.", Thread.currentThread().getName());
     }
 
@@ -92,7 +102,7 @@ public class AlgCycleRunnableJG implements Runnable {
      * @param bannedRoads set of banned roads
      * @param road road which was chosen in the cycle
      */
-    private void theFindCyclesAlgorithm(final Set<Road> bannedRoads, final Road road, final int components, boolean recComp) {
+    private void theFindCyclesAlgorithm(final Set<Road> bannedRoads, final Road road, final int components, boolean recComp) { //////////////////////////////// see, remove last parameter
 
         // remove banned roads from graph
         for (Road roadTORemove : bannedRoads) {
@@ -128,7 +138,7 @@ public class AlgCycleRunnableJG implements Runnable {
                 }
             }
 
-        } else {            
+        } else {
             // The path exists. We haven't got the cut.
             // limit maximal number of closed roads
             if ((bannedRoads.size()) < maxNumberOfRoadsToClose) {

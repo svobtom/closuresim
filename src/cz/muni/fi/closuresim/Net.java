@@ -164,6 +164,36 @@ public class Net {
             dm.add(n.getMarking());
         }
 
+        /*
+         // display details about disconnected network
+         for (int i = 0; i < 100; i++) {
+         int num = 0;
+
+         for (Node n : nodes) {
+         if (n.getMarking() == (i + 1)) {
+         num++;
+         }
+         }
+
+         if (num < 1) {
+         break;
+         }
+
+         System.out.println("Component " + (i + 1) + " have " + num + " nodes.");
+
+         final int maximumNodeNamesToDisplay = 100;
+         if (num < maximumNodeNamesToDisplay) {
+         for (Node n : nodes) {
+         if (n.getMarking() == (i + 1)) {
+         System.out.print(n.getName() + "; ");
+         } else {
+         }
+         }
+         System.out.println();
+         }
+
+         }
+         */
         return dm.size();
     }
 
@@ -197,7 +227,7 @@ public class Net {
             n.setMarking(0);
         }
 
-        // marking of the nodes, choose first node
+        // choose the first node and mark it and do recursion
         Iterator<Node> it = nodes.iterator();
         if (it.hasNext()) {
             Node n = it.next();
@@ -289,7 +319,7 @@ public class Net {
         }
 
         final int denumerator = closedRoads + 1;
-        
+
         // count average value
         double expectedValue = (1 / (double) denumerator) * (sumOfInhabitants);
 
@@ -298,14 +328,14 @@ public class Net {
         for (int i = 0; i < numOfTheComponents; i++) {
             varRight += Math.pow(inhabitantsInComponent[i] - expectedValue, 2);
         }
-        
+
         // count not existing components
         int j = denumerator;
         while (numOfTheComponents < j) {
             varRight += Math.pow(0 - expectedValue, 2);
             j--;
         }
-        
+
         double variance = (1 / (double) (denumerator - 1)) * varRight;
 
         return Math.sqrt(variance);

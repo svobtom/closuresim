@@ -19,10 +19,16 @@ public class AlgorithmCycle implements Algorithm {
     private final int maxNumOfComponents;
     /* Determine if disconnection containing less roads than specified will be stored */
     private final boolean findOnlyAccurateDisconnection;
-    /** Use jGrapht library */
+    /**
+     * Use jGrapht library
+     */
     private final boolean withJG;
-    /** Road witch will be skiped */
+    /**
+     * Road witch will be skiped
+     */
     private final Set<Road> roadsToSkip;
+    /* */
+    private final boolean onlyStoreResultByRoads;
     /* Number of threads to create (one core is left for the main thread) */
     private final int NUMBER_OF_THREADS = ExperimentSetup.USE_CPUs - 1;
     /* Queue of unprocessed roads */
@@ -33,30 +39,34 @@ public class AlgorithmCycle implements Algorithm {
             DisconnectionCollector disconnectionCollector,
             final int maxNumOfComponents,
             final boolean findOnlyAccurateDisconnection,
-            boolean withJG, 
-            Set<Road> roadsToSkip
-            ) {
+            boolean withJG,
+            Set<Road> roadsToSkip,
+            boolean onlyStoreResultByRoads
+    ) {
         this.net = net;
         this.disconnectionCollector = disconnectionCollector;
         this.maxNumOfComponents = maxNumOfComponents;
         this.findOnlyAccurateDisconnection = findOnlyAccurateDisconnection;
         this.withJG = withJG;
         this.roadsToSkip = roadsToSkip;
+        this.onlyStoreResultByRoads = onlyStoreResultByRoads;
     }
-    
-        public AlgorithmCycle(
+
+    public AlgorithmCycle(
             Net net,
             DisconnectionCollector disconnectionCollector,
             final int maxNumOfComponents,
             final boolean findOnlyAccurateDisconnection,
-            boolean withJG
-            ) {
+            boolean withJG,
+            boolean onlyStoreResultByRoads
+    ) {
         this.net = net;
         this.disconnectionCollector = disconnectionCollector;
         this.maxNumOfComponents = maxNumOfComponents;
         this.findOnlyAccurateDisconnection = findOnlyAccurateDisconnection;
         this.withJG = withJG;
         this.roadsToSkip = new HashSet<>(0);
+        this.onlyStoreResultByRoads = onlyStoreResultByRoads;
     }
 
     @Override
@@ -64,7 +74,7 @@ public class AlgorithmCycle implements Algorithm {
 
         // add all roads to the queue, threads are going to run over all roads in the queue
         queue.addAll(net.getRoads());
-        
+
         // skip road processed before
         queue.removeAll(roadsToSkip);
 
@@ -80,7 +90,7 @@ public class AlgorithmCycle implements Algorithm {
         for (int i = 0; i < NUMBER_OF_THREADS; i++) {
             // inicialize runnable by specific algorithm modification
             if (withJG) {
-                runnables[i] = new AlgCycleRunnableJG(net, disconnectionCollector, maxClosedRoads, maxNumOfComponents, findOnlyAccurateDisconnection);
+                runnables[i] = new AlgCycleRunnableJG(net, disconnectionCollector, maxClosedRoads, maxNumOfComponents, findOnlyAccurateDisconnection, onlyStoreResultByRoads);
             } else {
                 runnables[i] = new AlgCycleRunnable(net, disconnectionCollector, maxClosedRoads, maxNumOfComponents, findOnlyAccurateDisconnection);
             }
@@ -102,7 +112,7 @@ public class AlgorithmCycle implements Algorithm {
                 ExperimentSetup.LOGGER.log(Level.SEVERE, "Exception during waiting to end of all threads in the algorithm.", ex);
             }
         }
-        
+
         System.out.println("Algorithm done.");
     }
 }

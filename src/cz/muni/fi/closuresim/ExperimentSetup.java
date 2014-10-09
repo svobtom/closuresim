@@ -130,7 +130,8 @@ public class ExperimentSetup {
                         Integer.parseInt(properties.getProperty("numberOfComponents", "2")),
                         Boolean.parseBoolean(properties.getProperty("findOnlyAccurate")),
                         true,
-                        roadsToSkip);
+                        roadsToSkip,
+                        Boolean.parseBoolean(properties.getProperty("onlyStoreResultByRoads")));
                 break;
             case "cycle-my":
                 alg = new AlgorithmCycle(
@@ -139,7 +140,8 @@ public class ExperimentSetup {
                         Integer.parseInt(properties.getProperty("numberOfComponents", "2")),
                         Boolean.parseBoolean(properties.getProperty("findOnlyAccurate")),
                         false,
-                        roadsToSkip);
+                        roadsToSkip,
+                        Boolean.parseBoolean(properties.getProperty("onlyStoreResultByRoads")));
                 break;
             case "cycle-cut":
                 alg = new AlgorithmCycleCut(
@@ -252,10 +254,9 @@ public class ExperimentSetup {
             csa.doRoadsStatisctics();
             LOGGER.addTime("endOfAnalysis");
         }
-        
+
         // delete temporary files and parcial results
-        resultWriter.deleteTempFiles();
-        
+        //resultWriter.deleteTempFiles();
         System.out.println();
         LOGGER.endExperiment();
     } // end method main

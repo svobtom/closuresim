@@ -170,7 +170,7 @@ public class ResultWriter {
             BufferedWriter outAll = new BufferedWriter(fileWriterAll);
 
             if (disconnections.isEmpty()) {
-                outAll.write("None_disconnection_found.");
+                //outAll.write("None_disconnection_found.");
                 outAll.close();
                 return;
             }
