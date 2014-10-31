@@ -1,6 +1,8 @@
 package cz.muni.fi.closuresim;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.HashSet;
@@ -10,7 +12,7 @@ import java.util.TreeSet;
 import java.util.logging.Level;
 import org.jgrapht.Graph;
 import org.jgrapht.graph.Multigraph;
-import org.jgrapht.alg.DijkstraShortestPath;
+import org.jgrapht.traverse.BreadthFirstIterator;
 
 /**
  * Body of the cycle algorithm. It use jGraphT library.
@@ -109,8 +111,7 @@ public class AlgCycleRunnableJG implements Runnable {
             graph.removeEdge(roadTORemove);
         }
 
-        DijkstraShortestPath<Node, Road> dsp = new DijkstraShortestPath<>(graph, road.getFirst_node(), road.getSecond_node());
-        List<Road> path = dsp.getPathEdgeList();
+        List<Road> path = getPathByBFS(graph, road.getFirst_node(), road.getSecond_node());
 
         for (Road roadToAdd : bannedRoads) {
             graph.addEdge(roadToAdd.getFirst_node(), roadToAdd.getSecond_node(), roadToAdd);
@@ -156,4 +157,57 @@ public class AlgCycleRunnableJG implements Runnable {
         }
     }
 
+    private static List<Road> getPathByBFS(Graph<Node, Road> graph, Node first_node, Node finishNode) {
+
+        MyBreadthFirstIterator bfi = new MyBreadthFirstIterator(graph, first_node);
+
+        while (bfi.hasNext()) {
+            Object nextNode = bfi.next();
+
+            if (nextNode.equals(finishNode)) {
+
+                return createPath(bfi, finishNode);
+            }
+        }
+
+        return null;
+    }
+
+    private static List<Road> createPath(MyBreadthFirstIterator iter, Node endVertex) {
+        List<Road> path = new ArrayList<>();
+
+        while (true) {
+            Road edge = iter.getSpanningTreeEdge(endVertex);
+
+            if (edge == null) {
+                break;
+            } else {
+                path.add(edge);
+                endVertex = edge.getOppositeNode(endVertex);
+            }
+        }
+
+        //Collections.reverse(path); // no need, no depend on order
+
+        return path;
+    }
+
+    private static class MyBreadthFirstIterator extends BreadthFirstIterator<Node, Road> {
+
+        public MyBreadthFirstIterator(Graph g, Node startVertex) {
+            super(g, startVertex);
+        }
+
+        @Override
+        protected void encounterVertex(Node vertex, Road edge) {
+            super.encounterVertex(vertex, edge);
+            putSeenData(vertex, edge);
+        }
+
+        public Road getSpanningTreeEdge(Node vertex) {
+            Road r = (Road) getSeenData(vertex);
+
+            return r;
+        }
+    }
 }
