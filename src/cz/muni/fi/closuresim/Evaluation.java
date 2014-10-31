@@ -1,6 +1,15 @@
 package cz.muni.fi.closuresim;
 
+import com.google.common.io.Files;
+import java.io.File;
+import java.io.IOException;
+import java.nio.charset.Charset;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.logging.Level;
+import org.apache.commons.io.FileUtils;
 
 /**
  * Evaluate found disconnections.
@@ -13,10 +22,15 @@ public class Evaluation {
     private final Net net;
     private final DisconnectionCollector disconnectionCollector;
     private final DisconnectionCollector[] subCollectors;
-    
-    public Evaluation(Net net, DisconnectionCollector dc) {
+
+    public Evaluation(Net net, DisconnectionCollector dc, boolean storeByRoad) {
         this.net = net;
         this.disconnectionCollector = dc;
+
+        // load partial results
+        if (storeByRoad) {
+            loadPartialResults();
+        }
 
         // create new subcollectors
         subCollectors = new DisconnectionCollector[NUMBER_OF_THREADS];
@@ -33,13 +47,13 @@ public class Evaluation {
     }
 
     public void start() {
-        
+
         // if no disconnection was in the collector don't start the threads
         if (this.disconnectionCollector.getNumberOfDisconnections() == 0) {
             ExperimentSetup.LOGGER.warning("There is no disconnection to evaluate");
             return;
         }
-        
+
         Runnable[] runnables = new Runnable[NUMBER_OF_THREADS];
         Thread[] threads = new Thread[NUMBER_OF_THREADS];
 
@@ -62,5 +76,46 @@ public class Evaluation {
         }
 
         System.out.println("Done");
+    }
+
+    private void loadPartialResults() {
+
+        // load disconnections from partial results
+        File directory = new File(ExperimentSetup.outputDirectory, "partial-results");
+        final String[] extensions = {"csv"}; // file extension of loaded files
+        Collection<File> files = FileUtils.listFiles(directory, extensions, false);
+       
+        for (File oneFile : files) {
+           
+            loadPartialFile(oneFile);
+        }
+    }
+
+    private void loadPartialFile(File oneFile) {
+
+        try {
+            List<String> lines = Files.readLines(oneFile, Charset.forName("UTF-8"));
+
+            for (String line : lines) {
+                loadOneLine(line);
+            }
+
+        } catch (IOException ex) {
+            ExperimentSetup.LOGGER.log(Level.SEVERE, "Partial result (" + oneFile + ") can't be read", ex);
+        }
+
+    }
+
+    private void loadOneLine(String line) {
+
+        String[] roadNames = line.split(";");
+        Set<Road> roads = new HashSet<>();
+        for (String roadName : roadNames) {
+            Road r = this.net.getRoad(roadName);
+            roads.add(r);
+        }
+
+        Disconnection dis = new Disconnection(roads);
+        this.disconnectionCollector.addDisconnection(dis);
     }
 }

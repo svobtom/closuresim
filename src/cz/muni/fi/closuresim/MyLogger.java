@@ -79,6 +79,7 @@ public class MyLogger extends Logger {
         // display time of execution
         addTime("endTime");
         System.out.println("Finding time is " + (getTime("endOfAlgorithm") - getTime("startOfAlgorithm")) / 1000.0 + " seconds. ");
+        System.out.println("Prepare eval. time is " + (getTime("endOfprepareEvaluation") - getTime("prepareEvaluation")) / 1000.0 + " seconds. ");
         System.out.println("Evaluation time is " + (getTime("endOfEvaluation") - getTime("startOfEvaluation")) / 1000.0 + " seconds. ");
         System.out.println("Filtering NCS time is " + (getTime("endOfFiltering") - getTime("startOfFiltering")) / 1000.0 + " seconds. ");
         System.out.println("Sorting time is " + (getTime("endOfSorting") - getTime("startOfSorting")) / 1000.0 + " seconds. ");

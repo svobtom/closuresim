@@ -91,7 +91,6 @@ public class AlgCycleRunnableJG implements Runnable {
         ExperimentSetup.LOGGER.log(Level.INFO, "Thread {0} finished searching.", Thread.currentThread().getName());
 
         if (!onlyStoreResultByRoads) {
-            resultWriter.storeDisconnection(Thread.currentThread().getName(), disconnections);
             this.disconnectionCollector.addDisconnections(this.disconnections);
         }
 

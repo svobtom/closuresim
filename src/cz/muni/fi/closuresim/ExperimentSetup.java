@@ -193,15 +193,18 @@ public class ExperimentSetup {
         if (!properties.getProperty("evaluation").equals("none")) {
 
             // evaluation of the disconnection
-            LOGGER.addTime("startOfEvaluation");
-            Evaluation evaluation = new Evaluation(net, disconnectionCollector);
+            
+            LOGGER.addTime("prepareEvaluation");
+            Evaluation evaluation = new Evaluation(net, disconnectionCollector, Boolean.parseBoolean(properties.getProperty("onlyStoreResultByRoads")));
             System.out.println();
             System.out.println("Evaluaton started (" + evaluation.getClass().getSimpleName() + ")");
+            LOGGER.addTime("endOfprepareEvaluation");
             System.out.println("------------------------------------------------------------------");
+            LOGGER.addTime("startOfEvaluation");
             evaluation.start();
+            LOGGER.addTime("endOfEvaluation");
             System.out.println("------------------------------------------------------------------");
             System.out.println();
-            LOGGER.addTime("endOfEvaluation");
 
             // filter not minimal cut-sets
             LOGGER.addTime("startOfFiltering");
@@ -256,7 +259,7 @@ public class ExperimentSetup {
         }
 
         // delete temporary files and parcial results
-        //resultWriter.deleteTempFiles();
+        resultWriter.deleteTempFiles();
         System.out.println();
         LOGGER.endExperiment();
     } // end method main
