@@ -2,11 +2,12 @@ package cz.muni.fi.closuresim;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.logging.Level;
@@ -24,28 +25,41 @@ public class AlgCycleRunnableJG implements Runnable {
     private final Net net;
     private final SortedSet<Disconnection> disconnections;
     private final DisconnectionCollector disconnectionCollector;
+    private final ResultWriter resultWriter;
+
     private final int maxNumberOfRoadsToClose;
     private final int maxNumberOfComponents;
     private final boolean findOnlyAccurateDisconnection;
-    private final ResultWriter resultWriter;
-    /**
-     * Number of disconenctions found from one road
-     */
     private int disconnectionsFromOneRoad = 0;
     private final boolean onlyStoreResultByRoads;
 
+    private final Set<Road> alwaysOpenRoads;
+    private final boolean alwaysOpenRoadsOccur; // optimalization
+
     private final Graph<Node, Road> graph = new Multigraph(Road.class);
 
-    public AlgCycleRunnableJG(Net net, DisconnectionCollector dc, final int roads, final int comp, final boolean foad, boolean onlyStoreResultByRoads) {
+    protected final static Map<Integer, Integer> cycleLength = new HashMap<>();
+    private final static Object LOCKER = new Object();
+
+    public AlgCycleRunnableJG(Net net, DisconnectionCollector dc, int roads, int maxComponents, boolean accurate, boolean onlyStoreResultByRoads, Set<Road> alwaysOpenRoads) {
         this.net = net.clone();
         this.disconnections = new TreeSet<>();
         this.disconnectionCollector = dc;
         this.maxNumberOfRoadsToClose = roads;
-        this.maxNumberOfComponents = comp;
-        this.findOnlyAccurateDisconnection = foad;
+        this.maxNumberOfComponents = maxComponents;
+        this.findOnlyAccurateDisconnection = accurate;
         File partRes = new File(ExperimentSetup.outputDirectory, "partial-results");
         this.resultWriter = new ResultWriter(partRes);
         this.onlyStoreResultByRoads = onlyStoreResultByRoads;
+
+        // if there are some alwaysOpenRoads
+        if (alwaysOpenRoads != null && alwaysOpenRoads.size() > 0) {
+            this.alwaysOpenRoads = alwaysOpenRoads;
+            this.alwaysOpenRoadsOccur = true;
+        } else {
+            this.alwaysOpenRoads = null;
+            this.alwaysOpenRoadsOccur = false;
+        }
 
         // add vertices
         for (Node n : this.net.getNodes()) {
@@ -71,11 +85,11 @@ public class AlgCycleRunnableJG implements Runnable {
                 final Road cRoadToStart = this.net.getRoad(roadToStart.getId());
 
                 // create the R set - bannedRoads
-                final Set<Road> bannedRoads = new HashSet<>();
+                final SortedSet<Road> bannedRoads = new TreeSet<>();
                 bannedRoads.add(cRoadToStart);
 
                 // 1. choosing edge e
-                theFindCyclesAlgorithm(bannedRoads, cRoadToStart, 1, true);
+                theFindCyclesAlgorithm(bannedRoads, cRoadToStart, 1); // true
 
                 ExperimentSetup.LOGGER.log(Level.INFO,
                         "Road " + cRoadToStart.getName() + " was processed by thread {0}. Found " + this.disconnectionsFromOneRoad + " disconnections.",
@@ -90,6 +104,7 @@ public class AlgCycleRunnableJG implements Runnable {
         }
         ExperimentSetup.LOGGER.log(Level.INFO, "Thread {0} finished searching.", Thread.currentThread().getName());
 
+        // store all disconnection to the main collector
         if (!onlyStoreResultByRoads) {
             this.disconnectionCollector.addDisconnections(this.disconnections);
         }
@@ -103,15 +118,31 @@ public class AlgCycleRunnableJG implements Runnable {
      * @param bannedRoads set of banned roads
      * @param road road which was chosen in the cycle
      */
-    private void theFindCyclesAlgorithm(final Set<Road> bannedRoads, final Road road, final int components, boolean recComp) { //////////////////////////////// see, remove last parameter
-
+    private void theFindCyclesAlgorithm(final Set<Road> bannedRoads, final Road road, final int components) { // boolean recComp
+        
         // remove banned roads from graph
         for (Road roadTORemove : bannedRoads) {
             graph.removeEdge(roadTORemove);
         }
 
-        List<Road> path = getPathByBFS(graph, road.getFirst_node(), road.getSecond_node());
+        List<Road> path = findShortestPathByBFS(graph, road.getFirst_node(), road.getSecond_node());
 
+        if (ExperimentSetup.DEBUG) {
+            //System.out.println(road + " - " + path + " banned " + bannedRoads);
+
+            synchronized (LOCKER) {
+                // store cycle length
+                int pathLength = path == null ? 0 : path.size() + 1;
+                if (cycleLength.get(pathLength) == null) {
+                    // new cycle length
+                    cycleLength.put(pathLength, 1);
+                } else {
+                    cycleLength.put(pathLength, cycleLength.get(pathLength) + 1);
+                }
+            }
+        }
+
+        // add edges to graph
         for (Road roadToAdd : bannedRoads) {
             graph.addEdge(roadToAdd.getFirst_node(), roadToAdd.getSecond_node(), roadToAdd);
         }
@@ -121,20 +152,33 @@ public class AlgCycleRunnableJG implements Runnable {
             // The path doesn't exist. We have cut. Put it down
             // if we don't want disconnection by fewer roads, skip putting down 
             if (!findOnlyAccurateDisconnection || bannedRoads.size() >= maxNumberOfRoadsToClose) {
-                Disconnection dis = new Disconnection(bannedRoads);
-                this.disconnections.add(dis);
-                this.disconnectionsFromOneRoad++;
+
+                // only store the new disconnection when alwaysOpenRoads isn't set or banned roads doesn't contain any road from alwaysOpenRoads
+                if (!alwaysOpenRoadsOccur || (alwaysOpenRoadsOccur && Net.roadIntersection(bannedRoads, alwaysOpenRoads).isEmpty())) {
+
+                    Disconnection dis = new Disconnection(bannedRoads);
+                    this.disconnections.add(dis);
+                    this.disconnectionsFromOneRoad++;
+                }
             }
 
             // recursive finding disconnections to more components
             if ((components + 1) < maxNumberOfComponents) {
-                final Set<Road> allowedRoads = new HashSet<>(net.getRoads());
+
+                Set<Road> allowedRoads = new HashSet<>(AlgorithmCycle.spanningTree);
                 allowedRoads.removeAll(bannedRoads);
 
                 // for every recently not banned road
                 for (Iterator<Road> it = allowedRoads.iterator(); it.hasNext();) {
+
                     final Road allowedRoad = it.next();
-                    theFindCyclesAlgorithm(bannedRoads, allowedRoad, components + 1, true);
+
+                    // rebok zmena
+                    //bannedRoads.add(allowedRoad);
+
+                    
+                    // skip bannedRoads, like allowedRoads.removeAll(bannedRoads);
+                    theFindCyclesAlgorithm(bannedRoads, allowedRoad, components + 1); // true
                 }
             }
 
@@ -150,22 +194,30 @@ public class AlgCycleRunnableJG implements Runnable {
                     newBannedRoads.add(roadInPath);
 
                     //  run the algorithm recursively
-                    theFindCyclesAlgorithm(newBannedRoads, roadInPath, components, false);
+                    theFindCyclesAlgorithm(newBannedRoads, roadInPath, components); // false
                 }
             }
         }
     }
 
-    private static List<Road> getPathByBFS(Graph<Node, Road> graph, Node first_node, Node finishNode) {
+    /**
+     * Find the shortest path from one node to another.
+     *
+     * @param graph
+     * @param startNode
+     * @param endNode
+     * @return list of roads on the shortest path, null if the path doesn't
+     * exist
+     */
+    private static List<Road> findShortestPathByBFS(Graph<Node, Road> graph, Node startNode, Node endNode) {
 
-        MyBreadthFirstIterator bfi = new MyBreadthFirstIterator(graph, first_node);
+        MyBreadthFirstIterator bfi = new MyBreadthFirstIterator(graph, startNode);
 
         while (bfi.hasNext()) {
-            Object nextNode = bfi.next();
+            Node nextNode = bfi.next();
 
-            if (nextNode.equals(finishNode)) {
-
-                return createPath(bfi, finishNode);
+            if (nextNode.equals(endNode)) {
+                return createPath(bfi, endNode);
             }
         }
 
@@ -186,8 +238,7 @@ public class AlgCycleRunnableJG implements Runnable {
             }
         }
 
-        //Collections.reverse(path); // no need, no depend on order
-
+        //Collections.reverse(path); // no need, doesn't depend on the order
         return path;
     }
 
@@ -205,7 +256,6 @@ public class AlgCycleRunnableJG implements Runnable {
 
         public Road getSpanningTreeEdge(Node vertex) {
             Road r = (Road) getSeenData(vertex);
-
             return r;
         }
     }

@@ -1,10 +1,15 @@
 package cz.muni.fi.closuresim;
 
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.logging.Level;
+import org.jgrapht.Graph;
+import org.jgrapht.alg.KruskalMinimumSpanningTree;
+import org.jgrapht.alg.interfaces.MinimumSpanningTree;
+import org.jgrapht.graph.Multigraph;
 
 /**
  * Main class of the Algorithm Cycle. It do necessary setting and start threads.
@@ -19,6 +24,9 @@ public class AlgorithmCycle implements Algorithm {
     private final int maxNumOfComponents;
     /* Determine if disconnection containing less roads than specified will be stored */
     private final boolean findOnlyAccurateDisconnection;
+    /* alwaysOpenRoads */
+    private final Set<Road> alwaysOpenRoads;
+
     /**
      * Use jGrapht library
      */
@@ -34,6 +42,9 @@ public class AlgorithmCycle implements Algorithm {
     /* Queue of unprocessed roads */
     protected static final Queue<Road> queue = new ConcurrentLinkedQueue<>();
 
+    protected static final Graph<Node, Road> graph = new Multigraph(Road.class);
+    protected static Set<Road> spanningTree;
+
     public AlgorithmCycle(
             Net net,
             DisconnectionCollector disconnectionCollector,
@@ -41,7 +52,8 @@ public class AlgorithmCycle implements Algorithm {
             final boolean findOnlyAccurateDisconnection,
             boolean withJG,
             Set<Road> roadsToSkip,
-            boolean onlyStoreResultByRoads
+            boolean onlyStoreResultByRoads,
+            Set<Road> alwaysOpenRoads
     ) {
         this.net = net;
         this.disconnectionCollector = disconnectionCollector;
@@ -50,6 +62,18 @@ public class AlgorithmCycle implements Algorithm {
         this.withJG = withJG;
         this.roadsToSkip = roadsToSkip;
         this.onlyStoreResultByRoads = onlyStoreResultByRoads;
+        this.alwaysOpenRoads = alwaysOpenRoads;
+
+        // add vertices
+        for (Node n : this.net.getNodes()) {
+            graph.addVertex(n);
+        }
+        // add roads
+        for (Road r : this.net.getRoads()) {
+            graph.addEdge(r.getFirst_node(), r.getSecond_node(), r);
+        }
+        MinimumSpanningTree<Node, Road> minSpanningTree = new KruskalMinimumSpanningTree<>(graph);
+        spanningTree = minSpanningTree.getMinimumSpanningTreeEdgeSet();
     }
 
     public AlgorithmCycle(
@@ -58,7 +82,8 @@ public class AlgorithmCycle implements Algorithm {
             final int maxNumOfComponents,
             final boolean findOnlyAccurateDisconnection,
             boolean withJG,
-            boolean onlyStoreResultByRoads
+            boolean onlyStoreResultByRoads,
+            Set<Road> alwaysOpenRoads
     ) {
         this.net = net;
         this.disconnectionCollector = disconnectionCollector;
@@ -67,14 +92,29 @@ public class AlgorithmCycle implements Algorithm {
         this.withJG = withJG;
         this.roadsToSkip = new HashSet<>(0);
         this.onlyStoreResultByRoads = onlyStoreResultByRoads;
+        this.alwaysOpenRoads = alwaysOpenRoads;
+
+        // add vertices
+        for (Node n : this.net.getNodes()) {
+            graph.addVertex(n);
+        }
+
+        // add roads
+        for (Road r : this.net.getRoads()) {
+            graph.addEdge(r.getFirst_node(), r.getSecond_node(), r);
+        }
+        MinimumSpanningTree<Node, Road> minSpanningTree = new KruskalMinimumSpanningTree<>(graph);
+        spanningTree = minSpanningTree.getMinimumSpanningTreeEdgeSet();
     }
 
     @Override
     public void start(final int maxClosedRoads) {
 
-        // add all roads to the queue, threads are going to run over all roads in the queue
-        queue.addAll(net.getRoads());
+        // add roads from spanning tree to the queue, threads are going to run over all roads in the queue
+        queue.addAll(spanningTree);
 
+        //System.out.println("Roads = " + net.getRoads().size() + ", Spanning-tree roads = " + spanningTree.size());
+        
         // skip road processed before
         queue.removeAll(roadsToSkip);
 
@@ -90,10 +130,14 @@ public class AlgorithmCycle implements Algorithm {
         for (int i = 0; i < NUMBER_OF_THREADS; i++) {
             // inicialize runnable by specific algorithm modification
             if (withJG) {
-                runnables[i] = new AlgCycleRunnableJG(net, disconnectionCollector, maxClosedRoads, maxNumOfComponents, findOnlyAccurateDisconnection, onlyStoreResultByRoads);
+                runnables[i] = new AlgCycleRunnableJG(net, disconnectionCollector, maxClosedRoads,
+                        maxNumOfComponents, findOnlyAccurateDisconnection, onlyStoreResultByRoads,
+                        alwaysOpenRoads
+                );
             } else {
                 runnables[i] = new AlgCycleRunnable(net, disconnectionCollector, maxClosedRoads, maxNumOfComponents, findOnlyAccurateDisconnection);
             }
+
             // set thread to its runnable and name it
             threads[i] = new Thread(runnables[i]);
             threads[i].setName(Integer.toString(i));
@@ -111,6 +155,17 @@ public class AlgorithmCycle implements Algorithm {
             } catch (InterruptedException ex) {
                 ExperimentSetup.LOGGER.log(Level.SEVERE, "Exception during waiting to end of all threads in the algorithm.", ex);
             }
+        }
+
+        if (ExperimentSetup.DEBUG) {
+            System.out.println("*** Cycles length ***");
+            for (Map.Entry<Integer, Integer> entrySet : AlgCycleRunnableJG.cycleLength.entrySet()) {
+                Integer key = entrySet.getKey();
+                Integer value = entrySet.getValue();
+
+                System.out.println(key + "\t" + value);
+            }
+            System.out.println("***");
         }
 
         System.out.println("Algorithm done.");
