@@ -119,7 +119,12 @@ public class AlgCycleRunnableJG implements Runnable {
      * @param road road which was chosen in the cycle
      */
     private void theFindCyclesAlgorithm(final Set<Road> bannedRoads, final Road road, final int components) { // boolean recComp
-        
+
+        if (bannedRoads.size() > maxNumberOfRoadsToClose ) {
+            //System.out.println("return after beginning by road limit");
+            return;
+        }
+
         // remove banned roads from graph
         for (Road roadTORemove : bannedRoads) {
             graph.removeEdge(roadTORemove);
@@ -170,15 +175,12 @@ public class AlgCycleRunnableJG implements Runnable {
 
                 // for every recently not banned road
                 for (Iterator<Road> it = allowedRoads.iterator(); it.hasNext();) {
-
                     final Road allowedRoad = it.next();
 
-                    // rebok zmena
-                    //bannedRoads.add(allowedRoad);
+                    Set<Road> newBannedRoads = new HashSet<>(bannedRoads);
+                    newBannedRoads.add(allowedRoad);
 
-                    
-                    // skip bannedRoads, like allowedRoads.removeAll(bannedRoads);
-                    theFindCyclesAlgorithm(bannedRoads, allowedRoad, components + 1); // true
+                    theFindCyclesAlgorithm(newBannedRoads, allowedRoad, components + 1); // true
                 }
             }
 
