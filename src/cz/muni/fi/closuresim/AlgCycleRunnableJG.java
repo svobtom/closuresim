@@ -84,12 +84,8 @@ public class AlgCycleRunnableJG implements Runnable {
                 // get the road in the cloned net
                 final Road cRoadToStart = this.net.getRoad(roadToStart.getId());
 
-                // create the R set - bannedRoads
-                final SortedSet<Road> bannedRoads = new TreeSet<>();
-                bannedRoads.add(cRoadToStart);
-
                 // 1. choosing edge e
-                theFindCyclesAlgorithm(bannedRoads, cRoadToStart, 1); // true
+                findCutSets(1, new TreeSet<>(), cRoadToStart);
 
                 ExperimentSetup.LOGGER.log(Level.INFO,
                         "Road " + cRoadToStart.getName() + " was processed by thread {0}. Found " + this.disconnectionsFromOneRoad + " disconnections.",
@@ -115,13 +111,16 @@ public class AlgCycleRunnableJG implements Runnable {
     /**
      * The algorithm itself.
      *
-     * @param bannedRoads set of banned roads
+     * @param restrictedEdges set of banned roads
      * @param road road which was chosen in the cycle
      */
-    private void theFindCyclesAlgorithm(final Set<Road> bannedRoads, final Road road, final int components) { // boolean recComp
+    private void findCutSets(final int level, final Set<Road> restrictedEdges, final Road road) {
+
+        // add chosen edge to bannedEdges
+        restrictedEdges.add(road);
 
         // remove banned roads from graph
-        for (Road roadTORemove : bannedRoads) {
+        for (Road roadTORemove : restrictedEdges) {
             graph.removeEdge(roadTORemove);
         }
 
@@ -143,64 +142,59 @@ public class AlgCycleRunnableJG implements Runnable {
         }
 
         // add edges to graph
-        for (Road roadToAdd : bannedRoads) {
+        for (Road roadToAdd : restrictedEdges) {
             graph.addEdge(roadToAdd.getFirst_node(), roadToAdd.getSecond_node(), roadToAdd);
         }
 
         // Does the path exist?
-        if (path == null) {
+        if (path != null) {
+            // The path exists. We haven't got the cut.
+            // limit maximal number of closed roads
+            if ((restrictedEdges.size()) < maxNumberOfRoadsToClose) {
+
+                // for every road on the shortest cycle (from A to B)
+                for (Road roadInPath : path) {
+                    // create new banned roads (add roads on the found cycle to recently banned roads)
+
+                    //  run the algorithm recursively
+                    findCutSets(level, new TreeSet<>(restrictedEdges), roadInPath);
+                }
+            } else {
+                //System.out.println("cond 1 - cycle road limit");
+            }
+
+        } else {
             // The path doesn't exist. We have cut. Put it down
             // if we don't want disconnection by fewer roads, skip putting down 
-            if (!findOnlyAccurateDisconnection || bannedRoads.size() >= maxNumberOfRoadsToClose) {
+            if (!findOnlyAccurateDisconnection || restrictedEdges.size() >= maxNumberOfRoadsToClose) {
 
                 // only store the new disconnection when alwaysOpenRoads isn't set or banned roads doesn't contain any road from alwaysOpenRoads
-                if (!alwaysOpenRoadsOccur || (alwaysOpenRoadsOccur && Net.roadIntersection(bannedRoads, alwaysOpenRoads).isEmpty())) {
+                if (!alwaysOpenRoadsOccur || (alwaysOpenRoadsOccur && Net.roadIntersection(restrictedEdges, alwaysOpenRoads).isEmpty())) {
 
-                    Disconnection dis = new Disconnection(bannedRoads);
+                    Disconnection dis = new Disconnection(restrictedEdges);
                     this.disconnections.add(dis);
                     this.disconnectionsFromOneRoad++;
                 }
             }
 
             // recursive finding disconnections to more components
-            if ((components + 1) < maxNumberOfComponents) {
-                if (bannedRoads.size() < maxNumberOfRoadsToClose) {
+            if ((level + 1) < maxNumberOfComponents) {
+                if (restrictedEdges.size() < maxNumberOfRoadsToClose) {
 
                     Set<Road> allowedRoads = new HashSet<>(AlgorithmCycle.spanningTree);
-                    allowedRoads.removeAll(bannedRoads);
+                    allowedRoads.removeAll(restrictedEdges);
 
                     // for every recently not banned road
                     for (Iterator<Road> it = allowedRoads.iterator(); it.hasNext();) {
                         final Road allowedRoad = it.next();
 
-                        Set<Road> newBannedRoads = new HashSet<>(bannedRoads);
-                        newBannedRoads.add(allowedRoad);
-
-                        theFindCyclesAlgorithm(newBannedRoads, allowedRoad, components + 1); // true
+                        findCutSets(level + 1, new TreeSet<>(restrictedEdges), allowedRoad);
                     }
                 } else {
                     //System.out.println("cond 2 - roads limit");
                 }
             } else {
                 //System.out.println("cond 2 - components limit");
-            }
-
-        } else {
-            // The path exists. We haven't got the cut.
-            // limit maximal number of closed roads
-            if ((bannedRoads.size()) < maxNumberOfRoadsToClose) {
-
-                // for every road on the shortest cycle (from A to B)
-                for (final Road roadInPath : path) {
-                    // create new banned roads (add roads on the found cycle to recently banned roads)
-                    Set<Road> newBannedRoads = new HashSet<>(bannedRoads);
-                    newBannedRoads.add(roadInPath);
-
-                    //  run the algorithm recursively
-                    theFindCyclesAlgorithm(newBannedRoads, roadInPath, components); // false
-                }
-            } else {
-                //System.out.println("cond 1 - cycle road limit");
             }
         }
     }
