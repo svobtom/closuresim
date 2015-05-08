@@ -120,11 +120,6 @@ public class AlgCycleRunnableJG implements Runnable {
      */
     private void theFindCyclesAlgorithm(final Set<Road> bannedRoads, final Road road, final int components) { // boolean recComp
 
-        if (bannedRoads.size() > maxNumberOfRoadsToClose ) {
-            //System.out.println("return after beginning by road limit");
-            return;
-        }
-
         // remove banned roads from graph
         for (Road roadTORemove : bannedRoads) {
             graph.removeEdge(roadTORemove);
@@ -169,19 +164,25 @@ public class AlgCycleRunnableJG implements Runnable {
 
             // recursive finding disconnections to more components
             if ((components + 1) < maxNumberOfComponents) {
+                if (bannedRoads.size() < maxNumberOfRoadsToClose) {
 
-                Set<Road> allowedRoads = new HashSet<>(AlgorithmCycle.spanningTree);
-                allowedRoads.removeAll(bannedRoads);
+                    Set<Road> allowedRoads = new HashSet<>(AlgorithmCycle.spanningTree);
+                    allowedRoads.removeAll(bannedRoads);
 
-                // for every recently not banned road
-                for (Iterator<Road> it = allowedRoads.iterator(); it.hasNext();) {
-                    final Road allowedRoad = it.next();
+                    // for every recently not banned road
+                    for (Iterator<Road> it = allowedRoads.iterator(); it.hasNext();) {
+                        final Road allowedRoad = it.next();
 
-                    Set<Road> newBannedRoads = new HashSet<>(bannedRoads);
-                    newBannedRoads.add(allowedRoad);
+                        Set<Road> newBannedRoads = new HashSet<>(bannedRoads);
+                        newBannedRoads.add(allowedRoad);
 
-                    theFindCyclesAlgorithm(newBannedRoads, allowedRoad, components + 1); // true
+                        theFindCyclesAlgorithm(newBannedRoads, allowedRoad, components + 1); // true
+                    }
+                } else {
+                    //System.out.println("cond 2 - roads limit");
                 }
+            } else {
+                //System.out.println("cond 2 - components limit");
             }
 
         } else {
@@ -198,6 +199,8 @@ public class AlgCycleRunnableJG implements Runnable {
                     //  run the algorithm recursively
                     theFindCyclesAlgorithm(newBannedRoads, roadInPath, components); // false
                 }
+            } else {
+                //System.out.println("cond 1 - cycle road limit");
             }
         }
     }
