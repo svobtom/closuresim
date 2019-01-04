@@ -157,7 +157,7 @@ public class AlgCycleTest {
         assertTrue("Union of networks isn't in one component, should be", result.isInOneComponent());
 
         DisconnectionCollector dc = new DisconnectionCollector();
-        Algorithm alg = new AlgorithmCycle(result, dc, 2, false, true, false);
+        Algorithm alg = new AlgorithmCycle(result, dc, 2, false, true, false, null);
 
         alg.start(numberOfCutSetRoads);
         //System.out.println(dc.getNumberOfDisconnections());
@@ -265,7 +265,7 @@ public class AlgCycleTest {
         assertTrue("Union of networks isn't in one component, should be", result.isInOneComponent());
 
         DisconnectionCollector dc = new DisconnectionCollector();
-        Algorithm alg = new AlgorithmCycle(result, dc, 3, false, true, false);
+        Algorithm alg = new AlgorithmCycle(result, dc, 3, false, true, false, null);
 
         alg.start(2 * numberOfCutSetRoads);
         System.out.println(dc.getNumberOfDisconnections());
