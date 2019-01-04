@@ -6,8 +6,8 @@ import java.util.Properties;
 import java.util.logging.Level;
 
 /**
- * Load and verify values from configuration file. 
- * 
+ * Load and verify values from configuration file.
+ *
  * @author Tom
  */
 public class ConfigFileReader {
@@ -17,7 +17,7 @@ public class ConfigFileReader {
 
     /**
      * Create instance of ConfigFileReader.
-     * 
+     *
      * @param fileName name of file with configuration
      */
     public ConfigFileReader(final String fileName) {
@@ -27,12 +27,14 @@ public class ConfigFileReader {
 
     /**
      * Load values from the file.
-     * 
+     *
      * @return loaded properties
      */
     public Properties loadConfiguration() {
-        try {
-            this.properties.load(new FileInputStream(this.fileName));
+        try (FileInputStream fis = new FileInputStream(this.fileName)) {
+
+            this.properties.load(fis);
+
         } catch (IOException ex) {
             String msg = "Configuration file " + fileName + " wasn't found";
             ExperimentSetup.LOGGER.log(Level.SEVERE, msg, ex);
@@ -46,7 +48,7 @@ public class ConfigFileReader {
     }
 
     /**
-     * Basic verication of the properties. 
+     * Basic verication of the properties.
      */
     private void validationOfProperties() {
 
@@ -89,31 +91,31 @@ public class ConfigFileReader {
         }
 
         // method of evaluation
-         if (properties.getProperty("evaluation") == null || properties.getProperty("evaluation").length() < 1) {
+        if (properties.getProperty("evaluation") == null || properties.getProperty("evaluation").length() < 1) {
             String msg = "Configuration file " + fileName + ": evaluation isn't defined or it isn't in right format.";
             ExperimentSetup.LOGGER.log(Level.SEVERE, msg);
             System.err.println(msg);
             System.exit(1);
         }
 
-            // number to analyze
-            try {
-                Integer.parseInt(properties.getProperty("numberToAnalyze"));
-            } catch (NumberFormatException ex) {
-                String msg = "Configuration file " + fileName + ": numberToAnalyze is not parsable to integer.";
-                ExperimentSetup.LOGGER.log(Level.SEVERE, msg, ex);
-                System.err.println(msg);
-                System.exit(1);
-            }
+        // number to analyze
+        try {
+            Integer.parseInt(properties.getProperty("numberToAnalyze"));
+        } catch (NumberFormatException ex) {
+            String msg = "Configuration file " + fileName + ": numberToAnalyze is not parsable to integer.";
+            ExperimentSetup.LOGGER.log(Level.SEVERE, msg, ex);
+            System.err.println(msg);
+            System.exit(1);
+        }
 
-            // number to analyze by road
-            try {
-                Integer.parseInt(properties.getProperty("numberToAnalyzeByRoad"));
-            } catch (NumberFormatException ex) {
-                String msg = "Configuration file " + fileName + ": numberToAnalyzeByRoad is not parsable to integer.";
-                ExperimentSetup.LOGGER.log(Level.SEVERE, msg, ex);
-                System.err.println(msg);
-                System.exit(1);
-            }
+        // number to analyze by road
+        try {
+            Integer.parseInt(properties.getProperty("numberToAnalyzeByRoad"));
+        } catch (NumberFormatException ex) {
+            String msg = "Configuration file " + fileName + ": numberToAnalyzeByRoad is not parsable to integer.";
+            ExperimentSetup.LOGGER.log(Level.SEVERE, msg, ex);
+            System.err.println(msg);
+            System.exit(1);
         }
     }
+}

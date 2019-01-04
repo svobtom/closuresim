@@ -7,6 +7,7 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
+import java.util.TreeSet;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.apache.commons.io.FileUtils;
@@ -236,7 +237,7 @@ public class NetLoader {
                 String[] elements = line.split("  ", 2);
 
                 // check if the line is not empty
-                if (elements.length >= 1) {
+                if (elements.length > 0) {
 
                     // get name of the node and num of inhabitions
                     String[] line_elements = elements[0].split(";");
@@ -495,7 +496,7 @@ public class NetLoader {
     }
 
     /**
-     * Load roads which should be skipped during algorithm.
+     * Load roads which should be absolutly skipped during algorithm.
      *
      * @param path path to directory with processed roads files
      * @return set of roads which should be skipped
@@ -522,6 +523,49 @@ public class NetLoader {
             result.add(newRoad);
         }
 
+        return result;
+    }
+
+    /**
+     * Load alwaysOpenRoads
+     *
+     * @param filePath
+     * @return
+     */
+    public Set<Road> getAlwaysOpenRoads(String filePath) {
+
+        Set<Road> result = new TreeSet<>();
+
+        // no file path
+        if (filePath == null || filePath.isEmpty()) {
+            return result;
+        }
+
+        try {
+            InputStream fis = new FileInputStream(filePath);
+            BufferedReader br = new BufferedReader(new InputStreamReader(fis, Charset.forName("UTF-8")));
+
+            String line;
+            while ((line = br.readLine()) != null && !line.isEmpty()) {
+
+                line = line.trim();
+                Road r = this.net.getRoad(line);
+
+                if (r == null) {
+                    ExperimentSetup.LOGGER.log(Level.SEVERE, "There is unknown road in the alwaysOpenRoads file.");
+                } else {
+                    result.add(r);
+                }
+
+            }
+        } catch (FileNotFoundException ex) {
+            ExperimentSetup.LOGGER.log(Level.SEVERE, "File with alwaysOpenRoads not found.", ex);
+        } catch (IOException ex) {
+            ExperimentSetup.LOGGER.log(Level.SEVERE, "IO exception occur.", ex);
+        }
+
+        ExperimentSetup.LOGGER.log(Level.INFO, "From file " + filePath + " was loaded " + result.size() 
+                + " roads to be always open");
         return result;
     }
 }

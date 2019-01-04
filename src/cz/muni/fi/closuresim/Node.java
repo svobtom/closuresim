@@ -8,7 +8,7 @@ import java.util.Set;
  *
  * @author Tom
  */
-public class Node {
+public class Node implements Comparable<Node> {
 
     private int id;
     private int type;
@@ -212,6 +212,15 @@ public class Node {
 
     public double getLng() {
         return lng;
+    }
+
+    @Override
+    public int compareTo(Node other) {
+
+        String thisName = this.getName();
+        String otherName = other.getName();
+
+        return thisName.compareTo(otherName);
     }
 
 }

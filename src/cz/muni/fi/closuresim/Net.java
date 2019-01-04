@@ -231,7 +231,7 @@ public class Net {
         Iterator<Node> it = nodes.iterator();
         if (it.hasNext()) {
             Node n = it.next();
-            markTheNode(n);
+            markNodes(n);
         }
 
         // check if all nodes are marked
@@ -257,7 +257,7 @@ public class Net {
         Iterator<Node> it = nodes.iterator();
         if (it.hasNext()) {
             Node n = it.next();
-            markTheNode(n);
+            markNodes(n);
         }
 
         // check if all nodes are marked and set to zero marking of nodes
@@ -277,13 +277,13 @@ public class Net {
      *
      * @param n node to mark
      */
-    private void markTheNode(final Node n) {
+    private void markNodes(final Node n) {
         // test if the node is marked
         if (n.getMarking() != 1) {
             n.setMarking(1);
 
             for (Iterator<Node> it = n.getNeighbours().iterator(); it.hasNext();) {
-                markTheNode(it.next());
+                markNodes(it.next());
             }
         }
     }
@@ -363,6 +363,7 @@ public class Net {
         for (Iterator<Road> it = roads.iterator(); it.hasNext();) {
             Road oldRoad = it.next();
             Road newRoad = new Road(oldRoad);
+            newRoad.setLength(oldRoad.getLength());
             clonedRoads.add(newRoad);
 
             // find nodes in the cloned net
@@ -755,7 +756,7 @@ public class Net {
                 if (!r.isClosed()) {
 
                     final Node v = r.getOppositeNode(u);
-                    final int alt = distance.get(u) + 1; // accumulate shortest distance, dist[u] + dist_between(u, v)
+                    final int alt = distance.get(u) + r.getLength(); // accumulate shortest distance, dist[u] + dist_between(u, v)
                     if (alt < distance.get(v) && !visited.get(v)) {
                         distance.put(v, alt);
                         //previous.put(v, u);
@@ -821,6 +822,21 @@ public class Net {
         }
 
         return true;
+    }
+
+    /**
+     * Intersection of two sets.
+     * 
+     * @param firstSet
+     * @param secondSet
+     * @return roads which are in both of given sets
+     */
+    public static Set<Road> roadIntersection(Set<Road> firstSet, Set<Road> secondSet) {
+
+        Set<Road> intersection = new HashSet<>(firstSet);
+        intersection.retainAll(secondSet);
+        
+        return intersection;
     }
 
 }

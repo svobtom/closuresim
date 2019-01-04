@@ -291,31 +291,34 @@ public class DisconnectionCollector {
     }
 
     /**
-     * Get number of disconnections which do not form minimal cut-set
-     * of the net.
-     * 
+     * Get number of disconnections which do not form minimal cut-set of the
+     * net.
+     *
      * @param remove if true found not minimal cut-sets will be removed
-     * @return 
+     * @return
      */
     public int notMinimalCutSets(boolean remove) {
         Set<Disconnection> toRemove = new HashSet<>();
-        
+
         for (Disconnection disconnection : this.disconnections) {
             Number number = disconnection.getEvaluation(Valuation.IS_MINIMAL_CUT_SET);
             if (number == null) {
                 throw new IllegalArgumentException("Not evaluated by: IS_MINIMAL_CUT_SET");
             }
             int num = (Integer) number;
-            
+
             if (num != 1) {
+                if (ExperimentSetup.DEBUG) {
+                    System.out.println(disconnection);
+                }
                 toRemove.add(disconnection);
             }
         }
-        
+
         if (remove) {
             this.disconnections.removeAll(toRemove);
         }
-        
+
         return toRemove.size();
     }
 

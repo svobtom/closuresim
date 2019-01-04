@@ -19,6 +19,15 @@ public class ExperimentSetup {
      */
     private static final int AVAILABLE_CPUs = Runtime.getRuntime().availableProcessors();
     /**
+     * Debug mode is active if true. More information are print to output. 
+     */
+    protected static final boolean DEBUG = false;
+    
+    /**
+     * Save found disconnections.
+     */
+    protected static boolean saveDisconnections = true;
+    /**
      * Maximal number of CPU cores which application can use. Availible by all
      * class of this package.
      */
@@ -74,6 +83,9 @@ public class ExperimentSetup {
         NetLoader loader = new NetLoader(Boolean.parseBoolean(properties.getProperty("ignoreInhabitants")));
         Net net;
 
+        // save disconnections
+        saveDisconnections = Boolean.parseBoolean(properties.getProperty("saveDisconnections"));
+        
         // choose load function according to input file(s)
         if (properties.getProperty("fileEdges") == null) {
             net = loader.load(properties.getProperty("fileNodes"));
@@ -114,6 +126,9 @@ public class ExperimentSetup {
         LOGGER.addTime("startOfAlgorithm");
         Algorithm alg;
         switch (properties.getProperty("algorithm")) {
+            case "none":
+                alg = new AlgorithmNone();
+                break;
             case "simpa":
                 alg = new AlgorithmSimpleParallel(net, disconnectionCollector);
                 break;
@@ -131,7 +146,9 @@ public class ExperimentSetup {
                         Boolean.parseBoolean(properties.getProperty("findOnlyAccurate")),
                         true,
                         roadsToSkip,
-                        Boolean.parseBoolean(properties.getProperty("onlyStoreResultByRoads")));
+                        Boolean.parseBoolean(properties.getProperty("onlyStoreResultByRoads")),
+                        loader.getAlwaysOpenRoads(properties.getProperty("alwaysOpenRoads"))
+                );
                 break;
             case "cycle-my":
                 alg = new AlgorithmCycle(
@@ -141,7 +158,9 @@ public class ExperimentSetup {
                         Boolean.parseBoolean(properties.getProperty("findOnlyAccurate")),
                         false,
                         roadsToSkip,
-                        Boolean.parseBoolean(properties.getProperty("onlyStoreResultByRoads")));
+                        Boolean.parseBoolean(properties.getProperty("onlyStoreResultByRoads")),
+                        loader.getAlwaysOpenRoads(properties.getProperty("alwaysOpenRoads"))
+                );
                 break;
             case "cycle-cut":
                 alg = new AlgorithmCycleCut(
@@ -170,6 +189,9 @@ public class ExperimentSetup {
                         Integer.parseInt(ExperimentSetup.properties.getProperty("startOnLine")),
                         Integer.parseInt(ExperimentSetup.properties.getProperty("stopOnLine")));
                 break;
+            case "copy-partial-results":
+                alg = new AlgorithmCopyPartialResults(properties.getProperty("resultFile"));
+                break;
             case "test":
                 alg = new AlgorithmTest(
                         net,
@@ -193,7 +215,6 @@ public class ExperimentSetup {
         if (!properties.getProperty("evaluation").equals("none")) {
 
             // evaluation of the disconnection
-            
             LOGGER.addTime("prepareEvaluation");
             Evaluation evaluation = new Evaluation(net, disconnectionCollector, Boolean.parseBoolean(properties.getProperty("onlyStoreResultByRoads")));
             System.out.println();

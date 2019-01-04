@@ -21,9 +21,20 @@ public class AlgCombRunnable implements Runnable {
     private final Set<Disconnection> disconnections;
     private final Queue<ICombinatoricsVector<Road>> fronta = new LinkedList<>();
     private Generator<Road> generator;
-    private int startIndex;
-    private int stopIndex;
-     private static int minDistanceOfClosedRoads;
+    private long startIndex;
+    private long stopIndex;
+    private static int numberOfFoundDisconnection;
+
+    private static final int GENERATED_AT_ONCE = 1000000;
+    
+    
+    private long generatedEnd = Long.MAX_VALUE;
+
+    private static int runCounter = 0;
+    private int runCounterThread = 0;
+    private static final long startTime = System.currentTimeMillis();
+    private static long lastTime = (System.currentTimeMillis() - startTime) / 1000;
+    private static final Object LOCKER = new Object();
 
     public AlgCombRunnable(Net net, DisconnectionCollector disconnectionCollector) {
         this.net = net.clone();
@@ -31,7 +42,7 @@ public class AlgCombRunnable implements Runnable {
         this.disconnections = new HashSet<>();
     }
 
-    void prepare(Generator<Road> gen, final int startIndex, final int stopIndex) {
+    void prepare(Generator<Road> gen, final long startIndex, final long stopIndex) {
         this.generator = gen;
         this.startIndex = startIndex;
         this.stopIndex = stopIndex;
@@ -40,11 +51,18 @@ public class AlgCombRunnable implements Runnable {
     @Override
     public void run() {
         // assign workout to this thread
-        this.fronta.addAll(this.generator.generateObjectsRange(startIndex, stopIndex));
-
+        
+        if (stopIndex - startIndex < GENERATED_AT_ONCE) {
+            this.fronta.addAll(this.generator.generateObjectsRange((int) startIndex, (int) stopIndex));
+        } else {
+            generatedEnd = startIndex + GENERATED_AT_ONCE;
+            this.fronta.addAll(this.generator.generateObjectsRange((int) startIndex, (int) generatedEnd));
+        }
+        System.out.println("Combinatins generated");
+        
         // start testing
         testCombinations();
-        
+
         // store disconnections
         this.disconnectionCollector.addDisconnections(disconnections);
     }
@@ -55,14 +73,10 @@ public class AlgCombRunnable implements Runnable {
             ICombinatoricsVector<Road> iCombinatoricsVector = this.fronta.poll();
             if (iCombinatoricsVector != null) {
 
-                // filtering
-                // if (disconnectionCollector.make1RDisconnection(listOfroadsSourceNet)) { // || disconnectionCollector.make2RDisconnection(listOfroadsSourceNet) || !net.distanceBetweenRoadsIsAtLeast(2, listOfroadsSourceNet)
-                // if (minDistanceOfClosedRoads != 0 && !net.distanceBetweenRoadsIsAtLeast(minDistanceOfClosedRoads, listOfroadsSourceNet)) {                
-                // continue;
                 List<Road> listOfroadsSourceNet = iCombinatoricsVector.getVector();
-                List<Road> listOfroads = new ArrayList<>(listOfroadsSourceNet.size());
 
                 // get roads from net of this thread
+                List<Road> listOfroads = new ArrayList<>(listOfroadsSourceNet.size());
                 for (Road road : listOfroadsSourceNet) {
                     listOfroads.add(this.net.getRoad(road.getId()));
                 }
@@ -72,7 +86,8 @@ public class AlgCombRunnable implements Runnable {
                     road.close();
                 }
 
-                if (!net.isInOneComponentFaster()) {
+                // if net is not in one component and we save disconnections, the order is IMPORTANT
+                if (!net.isInOneComponentFaster() && ExperimentSetup.saveDisconnections) {
                     Disconnection dis = new Disconnection(listOfroads);
                     disconnections.add(dis);
                 }
@@ -81,7 +96,31 @@ public class AlgCombRunnable implements Runnable {
                 for (Road road : listOfroads) {
                     road.open();
                 }
+
+                synchronized (LOCKER) {
+                    runCounter++;
+                    runCounterThread++;
+                    long thisTime = (System.currentTimeMillis() - startTime) / 1000;
+                    if (runCounter % 1000000 == 0) {
+                        System.out.println("After " + ((System.currentTimeMillis() - startTime) / 1000) + " (" + (thisTime - lastTime) + ") seconds processed " + runCounter + " combinations");
+                        lastTime = thisTime;
+                    }
+                }
+
+                if (fronta.isEmpty() && (generatedEnd < stopIndex)) {
+
+                    long newGeneratedEnd = Math.min(generatedEnd + GENERATED_AT_ONCE, stopIndex);
+                    this.fronta.addAll(this.generator.generateObjectsRange((int)generatedEnd, (int) newGeneratedEnd));
+                    generatedEnd = newGeneratedEnd;
+                }
+                
+                listOfroads.clear();
+                listOfroadsSourceNet.clear();
             }
+        }
+
+        synchronized (LOCKER) {
+            System.out.println("Tested combinations by thread " + Thread.currentThread().getName() + ": " + runCounterThread + ", over all " + runCounter);
         }
     }
 
@@ -92,7 +131,7 @@ public class AlgCombRunnable implements Runnable {
      * @param num minimal distance
      */
     public static void setMinDistanceOfClosedRoads(final int num) {
-        minDistanceOfClosedRoads = num;
+        numberOfFoundDisconnection = num;
     }
 
 }

@@ -8,6 +8,8 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.SortedSet;
+import java.util.TreeSet;
 import java.util.logging.Level;
 import org.apache.commons.io.FileUtils;
 
@@ -85,28 +87,36 @@ public class Evaluation {
         final String[] extensions = {"csv"}; // file extension of loaded files
         Collection<File> files = FileUtils.listFiles(directory, extensions, false);
        
+        int processed = 0;
         for (File oneFile : files) {
-           
+            
             loadPartialFile(oneFile);
+            processed++;
+            
+            if (processed % 100 == 0) {
+                ExperimentSetup.LOGGER.info("Loading partial results. Processed " + processed);
+            }
         }
     }
 
     private void loadPartialFile(File oneFile) {
-
+        
         try {
             List<String> lines = Files.readLines(oneFile, Charset.forName("UTF-8"));
 
+            SortedSet<Disconnection> disconnections = new TreeSet<>();
             for (String line : lines) {
-                loadOneLine(line);
+                Disconnection dis = loadOneLine(line);
+                disconnections.add(dis);
             }
-
+            
+            this.disconnectionCollector.addDisconnections(disconnections);
         } catch (IOException ex) {
             ExperimentSetup.LOGGER.log(Level.SEVERE, "Partial result (" + oneFile + ") can't be read", ex);
         }
-
     }
 
-    private void loadOneLine(String line) {
+    private Disconnection loadOneLine(String line) {
 
         String[] roadNames = line.split(";");
         Set<Road> roads = new HashSet<>();
@@ -115,7 +125,6 @@ public class Evaluation {
             roads.add(r);
         }
 
-        Disconnection dis = new Disconnection(roads);
-        this.disconnectionCollector.addDisconnection(dis);
+        return new Disconnection(roads);
     }
 }

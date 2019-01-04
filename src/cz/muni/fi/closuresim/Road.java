@@ -112,7 +112,8 @@ public class Road implements Comparable<Road> {
             sn = second_node.getName();
         }
         //return this.name;
-        return id + "-" + name + (closed ? " (closed" : " (open") + ", " + fn + " - " + sn + ")";
+        //return id + "-" + name + (closed ? " (closed" : " (open") + ", " + fn + " - " + sn + ")";
+        return name + " (" + id + ")";
     }
 
     /**

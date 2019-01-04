@@ -1,11 +1,13 @@
 package cz.muni.fi.closuresim;
 
 import java.util.logging.Level;
+import org.apache.commons.math3.util.CombinatoricsUtils;
 import org.paukov.combinatorics.*;
 
 /**
- * Find disconnections by brutal force (generate all possible combinations of roads). 
- * 
+ * Find disconnections by brutal force (generate all possible combinations of
+ * roads).
+ *
  * @author Tom
  */
 public class AlgorithmCombinatoric implements Algorithm {
@@ -30,74 +32,74 @@ public class AlgorithmCombinatoric implements Algorithm {
     @Override
     public void start(final int maxClosedRoads) {
 
-        for (int nClosedRoads = 1; nClosedRoads <= maxClosedRoads; nClosedRoads++) {
+        //for (int nClosedRoads = 1; nClosedRoads <= maxClosedRoads; nClosedRoads++) {
+        int nClosedRoads = maxClosedRoads;
 
-            System.out.println("Finding combinations for " + nClosedRoads + " road(s).");
+        System.out.println("Finding combinations for " + nClosedRoads + " road(s).");
 
-            // Create new initial vector
-            ICombinatoricsVector<Road> initialVector = Factory.createVector(this.net.getRoads());
-            final int vectorSize = this.net.getRoads().size();
+        // Create new initial vector
+        ICombinatoricsVector<Road> initialVector = Factory.createVector(this.net.getRoads());
+        final int vectorSize = this.net.getRoads().size();
 
-            // Create a generator of simple combination to generate x-combinations of the vector
-            Generator<Road> gen = Factory.createSimpleCombinationGenerator(initialVector, nClosedRoads);
+        // Create a generator of simple combination to generate x-combinations of the vector
+        Generator<Road> gen = Factory.createSimpleCombinationGenerator(initialVector, nClosedRoads);
 
-            // create array of runnables and threads
-            AlgCombRunnable[] runnables = new AlgCombRunnable[NUMBER_OF_THREADS];
-            Thread[] threads = new Thread[NUMBER_OF_THREADS];
+        // create array of runnables and threads
+        AlgCombRunnable[] runnables = new AlgCombRunnable[NUMBER_OF_THREADS];
+        Thread[] threads = new Thread[NUMBER_OF_THREADS];
 
-            // set additional common atributes of runnable
-            AlgCombRunnable.setMinDistanceOfClosedRoads(minDistanceOfClosedRoads);
-
-            // inicialize runnebles and threas
-            for (int i = 0; i < NUMBER_OF_THREADS; i++) {
-                // inicialize runnable by specific algorithm modification
-                runnables[i] = new AlgCombRunnable(net, disconnectionCollector);
-                // set thread to its runnable and name it
-                threads[i] = new Thread(runnables[i]);
-                threads[i].setName(Integer.toString(i));
-            }
-
-            // check count of combination to one thread
-            final int startOnCombinationsNo = 0;
-            final int stopOnCombinationNo = combinatoricNumber(vectorSize, nClosedRoads);
-            final int numberOfCombinations = stopOnCombinationNo - startOnCombinationsNo;
-
-            final int forOneThread = numberOfCombinations / NUMBER_OF_THREADS;
-            int nextStart = startOnCombinationsNo;
-            int nextStop = nextStart + forOneThread;
-
-            // for all threads - give to the threads their combinations (workout) and start the thread
-            for (int i = 0; i < NUMBER_OF_THREADS; i++) {
-
-                runnables[i].prepare(gen, nextStart, nextStop);
-
-                // test pre-last iteration
-                if (i != NUMBER_OF_THREADS - 2) {
-                    nextStart = nextStop;
-                    nextStop = nextStart + forOneThread;
-                } else {
-                    // next run of cycle is the last
-                    nextStart = nextStop;
-                    nextStop = stopOnCombinationNo + 1;
-                }
-
-            }
-
-            for (int i = 0; i < NUMBER_OF_THREADS; i++) {
-                threads[i].start();
-            }
-
-            // wait until all threads end 
-            for (int i = 0; i < NUMBER_OF_THREADS; i++) {
-                try {
-                    threads[i].join();
-                } catch (InterruptedException ex) {
-                    ExperimentSetup.LOGGER.log(Level.SEVERE, "error while wating to threads to end", ex);
-                }
-            }
-
-            System.out.println();
+        // inicialize runnables and threas
+        for (int i = 0; i < NUMBER_OF_THREADS; i++) {
+            // inicialize runnable by specific algorithm modification
+            runnables[i] = new AlgCombRunnable(net, disconnectionCollector);
+            // set thread to its runnable and name it
+            threads[i] = new Thread(runnables[i]);
+            threads[i].setName(Integer.toString(i));
         }
+
+        // check count of combination to one thread
+        final int startOnCombinationsNo = 0;
+        final long stopOnCombinationNo = combinatoricNumber(vectorSize, nClosedRoads);
+        final long numberOfCombinations = stopOnCombinationNo - startOnCombinationsNo;
+
+        final long forOneThread = numberOfCombinations / NUMBER_OF_THREADS;
+        long nextStart = startOnCombinationsNo;
+        long nextStop = nextStart + forOneThread;
+
+        // for all threads - give to the threads their combinations (workout) and start the thread
+        for (int i = 0; i < NUMBER_OF_THREADS; i++) {
+
+            runnables[i].prepare(gen, nextStart, nextStop);
+            System.out.println("For thread " + i + " start is " + nextStart + ", stop is " + nextStop + ", so there is " + (nextStop - nextStart) + " combinations");
+
+            // test pre-last iteration
+            if (i != NUMBER_OF_THREADS - 2) {
+                nextStart = nextStop;
+                nextStop = nextStart + forOneThread;
+            } else {
+                // next run of cycle is the last
+                nextStart = nextStop;
+                nextStop = stopOnCombinationNo; // + 1 one no need may be
+            }
+
+        }
+
+        System.out.println("Number of combinations " + numberOfCombinations + ", for one thread (" + forOneThread + ")");
+        for (int i = 0; i < NUMBER_OF_THREADS; i++) {
+            threads[i].start();
+        }
+
+        // wait until all threads end 
+        for (int i = 0; i < NUMBER_OF_THREADS; i++) {
+            try {
+                threads[i].join();
+            } catch (InterruptedException ex) {
+                ExperimentSetup.LOGGER.log(Level.SEVERE, "error while wating to threads to end", ex);
+            }
+        }
+
+        System.out.println();
+
     }
 
     /**
@@ -107,13 +109,18 @@ public class AlgorithmCombinatoric implements Algorithm {
      * @param k element in subset
      * @return binomical coeficient
      */
-    public static int combinatoricNumber(final int n, final int k) {
-        int numerator = 1;
-        for (int i = 0; i < k; i++) {
-            numerator = numerator * (n - i);
-        }
+    public static long combinatoricNumber(final int n, int k) {
+        /*
+         int numerator = 1;
+         for (int i = 0; i < k; i++) {
+         numerator = numerator * (n - i);
+         }
 
-        return numerator / fact(k);
+         return numerator / fact(k);
+         */
+        
+        return CombinatoricsUtils.binomialCoefficient(n, k);
+        
     }
 
     /**
@@ -122,7 +129,7 @@ public class AlgorithmCombinatoric implements Algorithm {
      * @param x integer from 0 to 10
      * @return factorial
      */
-    private static int fact(final int x) {
+    private static int fact(int x) {
         switch (x) {
             case 0:
                 return 1;
